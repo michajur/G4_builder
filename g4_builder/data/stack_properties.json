@@ -1,0 +1,22 @@
+{
+  "aa": {
+    "rise": 3.4,
+    "twist_RH": 25,
+    "twist_LH": -25
+  },
+  "as": {
+    "rise": 3.4,
+    "twist_RH": 25,
+    "twist_LH": -25
+  },
+  "sa": {
+    "rise": 3.4,
+    "twist_RH": 25,
+    "twist_LH": -25
+  },
+  "ss": {
+    "rise": 3.4,
+    "twist_RH": 25,
+    "twist_LH": -25
+  }
+}

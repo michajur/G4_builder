@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "g4-builder"
+version = "0.1.0"
+description = "DNA strand, G-quadruplex reference and GROMACS folding preparation"
+requires-python = ">=3.9"
+dependencies = ["numpy>=1.23", "pandas>=1.5"]
+readme = "README.md"
+
+[project.scripts]
+g4-builder = "g4_builder.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["g4_builder*"]
+namespaces = false
+
+[tool.setuptools.package-data]
+g4_builder = ["data/*.json", "data/nucleotides/*.pdb", "data/reference_templates/*/*.pdb", "data/mdp/*.mdp"]

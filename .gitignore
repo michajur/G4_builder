@@ -1,0 +1,11 @@
+__pycache__/
+.vscode/
+/build/
+/testing/
+/old_stuff/
+g4_builder.egg-info/
+dev_notebook.ipynb
+TODO.txt
+notes.txt
+AGENTS.md
+*.pyc

@@ -1,0 +1,38 @@
+{
+  "sequence": "GGGTAGGGCGGCGGGGCAGGGT",
+  "GT_resids": {
+    "GT_1": [11, 1, 2],
+    "GT_2": [8, 7, 6],
+    "GT_3": [19, 20, 21],
+    "GT_4": [15, 14, 13]
+  },
+  "polarity_pattern": "ssa",
+  "helicity": "RH",
+  "force_field": 4,
+  "gromacs_executable": "gmx",
+  "dielectric_const": 15,
+  "saving_stride": 5000,
+  "after_folding_steps": 2500000,
+  "max_bulge_length": 3,
+  "n_frames": 5,
+  "schedule": {
+    "core_start": 1000000,
+    "core_spacing": 2000000,
+    "gt_initial": [
+      [0, 0.3, 0],
+      [100000, 0.3, 500],
+      [400000, 0.0, 12000]
+    ],
+    "core": [
+      [0, 0.5, 0],
+      [1000000, 0.0, 20000],
+      [2000000, 0.0, 20000],
+      [3000000, 0.0, 0]
+    ],
+    "tetrads": [
+      [0, 0.1, 0],
+      [1000000, 0.0, 20000],
+      [3000000, 0.0, 5000]
+    ]
+  }
+}

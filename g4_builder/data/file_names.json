@@ -1,0 +1,19 @@
+{
+  "strand": "strand.pdb",
+  "full_ref": "full_ref.pdb",
+  "reference": "{name}.pdb",
+  "plumed": "plumed_protocol.dat",
+  "colvar": "COLVAR",
+  "topology": "topol.top",
+  "posre": "posre.itp",
+  "conf": "conf.pdb",
+  "box": "conf_box.pdb",
+  "em_tpr": "em.tpr",
+  "tpr": "smd.tpr",
+  "joined_trajectory": "extraction_trajectory.xtc",
+  "frame": "frame_{index}.pdb",
+  "log": "gromacs.log",
+  "manifest": "run.json",
+  "em_mdp_template": "em.mdp",
+  "simulation_mdp_template": "SMD.mdp"
+}
