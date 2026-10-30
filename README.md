@@ -1,135 +1,340 @@
-# G4 builder library
+# G4 Builder
 
-`g4_builder` provides a Python API and terminal client for strand construction,
-reference preparation, restrained GROMACS simulations and frame extraction.
-See [INPUTS.md](INPUTS.md) for the complete current input contract.
+G4 Builder prepares DNA strands and G-quadruplex reference structures, generates
+PLUMED folding restraints, prepares and runs GROMACS simulations, and extracts
+trajectory frames with the lowest post-protocol RMSD. It provides a command-line
+interface for the complete workflow and a Python API for running individual
+steps or composing a pipeline. Molecular structures are represented as pandas
+DataFrames and can be saved as PDB files.
 
-## Terminal client
+## Installation
 
-After installation use `g4-builder`; from the source directory you can also use
-`conda run -n jupyter_env python -m g4_builder` with the same arguments.
+### Requirements
+
+| Dependency | Requirement |
+| --- | --- |
+| Python | 3.9 or newer |
+| NumPy | 1.23 or newer |
+| pandas | 1.5 or newer |
+| GROMACS | Required for topology generation, minimization, simulation-input preparation and frame extraction |
+| PLUMED-enabled GROMACS | Required for running the generated folding simulation |
+
+Strand construction, reference building and PLUMED protocol generation can run
+without GROMACS. GROMACS and PLUMED are external software; installing this
+Python package does not install them.
+
+### Install from a checkout
+
+In your chosen Python environment, run the following from the directory
+containing `pyproject.toml`:
 
 ```bash
-# JSON is used only for preparation; working_dir is always a separate flag.
-g4-builder prepare_nogmx -i examples/input.json -w testing/new_run
-g4-builder prepare       -i examples/input.json -w testing/new_run
+python -m pip install .
+```
 
-# Later modes read the prepared run.json; they do not accept --input.
-g4-builder run_sim -w testing/new_run
-g4-builder extract -w testing/new_run
+For development, use an editable installation so imports use the source tree:
 
-# Explicit extraction paths override the paths recorded by run_sim.
-g4-builder extract -w testing/new_run \
-    -trj testing/new_run/trjs/trj.part0001.xtc testing/new_run/trjs/trj.part0002.xtc \
+```bash
+python -m pip install -e .
+```
+
+If the environment already contains the declared dependencies and setuptools
+build tools, dependency installation and build isolation can be skipped:
+
+```bash
+python -m pip install -e . --no-build-isolation --no-deps
+```
+
+The installable distribution and terminal command are named `g4-builder`;
+the Python import is `g4_builder`. Check the installation with:
+
+```bash
+g4-builder --help
+python -m g4_builder --help
+```
+
+Both commands use the same interface. The module form is also usable from the
+project root before installation. An installation is needed to import the
+package reliably from other directories, including `notebooks/`.
+
+### Make GROMACS available
+
+Activate the environment that provides GROMACS before starting Python, Jupyter
+or the terminal client. On a cluster this may involve an environment module or
+Spack. Select the executable using `gromacs_executable` in the simulation
+settings, or `executable` when constructing a `GromacsRunner`.
+
+The executable may be a command on `PATH`, such as `gmx`, or an absolute path.
+A relative executable path containing `/` is resolved from the caller's current
+directory. The package does not activate external software environments itself.
+For notebooks, select a kernel in the environment where the package is installed.
+
+## Command-line interface
+
+### Basic workflow
+
+Edit [examples/input.json](examples/input.json) for your sequence, G-tracts and
+available force field. Choose a new run directory, then run:
+
+```bash
+# Prepare strand, references and PLUMED protocol without calling GROMACS.
+g4-builder prepare_nogmx -i examples/input.json -w runs/example
+
+# Continue preparation through topology generation, minimization and the TPR.
+g4-builder prepare -i examples/input.json -w runs/example
+
+# Run with a PLUMED-enabled GROMACS installation.
+g4-builder run_sim -w runs/example
+
+# Extract the lowest-RMSD frames from the recorded simulation outputs.
+g4-builder extract -w runs/example
+```
+
+`prepare` can also be used directly in a new directory; it performs all the
+preparation steps, including those in `prepare_nogmx`.
+
+| Mode | Action | Configuration source |
+| --- | --- | --- |
+| `prepare_nogmx` | Build and save the strand, references, PLUMED protocol and run metadata | Required input JSON |
+| `prepare` | Perform the above, generate topology, add a box, minimize and prepare the simulation TPR | Required input JSON |
+| `run_sim` | Run the prepared simulation | Saved `run.json` |
+| `extract` | Select and extract low-RMSD post-protocol frames | Saved `run.json`, with optional file-path overrides |
+
+All modes require `-w/--working-dir`. Preparation modes additionally require
+`-i/--input` and accept `--overwrite`. `run_sim` and `extract` do not accept
+an input JSON: they use the configuration and protocol information recorded
+during preparation.
+
+### Input JSON
+
+The input contains simulation settings only. Supply `working_dir` through the
+CLI flag, not inside the JSON. Missing optional entries use their defaults.
+Unknown fields and duplicate JSON keys raise errors.
+
+The following complete example uses the default optional settings and schedule:
+
+```json
+{
+  "sequence": "GGGTAGGGCGGCGGGGCAGGGT",
+  "GT_resids": {
+    "GT_1": [11, 1, 2],
+    "GT_2": [8, 7, 6],
+    "GT_3": [19, 20, 21],
+    "GT_4": [15, 14, 13]
+  },
+  "polarity_pattern": "ssa",
+  "helicity": "RH",
+  "force_field": 4,
+  "gromacs_executable": "gmx",
+  "dielectric_const": 15,
+  "saving_stride": 5000,
+  "after_folding_steps": 2500000,
+  "max_bulge_length": 3,
+  "n_frames": 5,
+  "schedule": {
+    "core_start": 1000000,
+    "core_spacing": 2000000,
+    "gt_initial": [
+      [0, 0.3, 0],
+      [100000, 0.3, 500],
+      [400000, 0.0, 12000]
+    ],
+    "core": [
+      [0, 0.5, 0],
+      [1000000, 0.0, 20000],
+      [2000000, 0.0, 20000],
+      [3000000, 0.0, 0]
+    ],
+    "tetrads": [
+      [0, 0.1, 0],
+      [1000000, 0.0, 20000],
+      [3000000, 0.0, 5000]
+    ]
+  }
+}
+```
+
+#### Required entries
+
+| Entry | Meaning and accepted values |
+| --- | --- |
+| `sequence` | DNA sequence written 5′ to 3′, containing at least two bases from `A`, `T`, `G`, `C`. Lowercase and whitespace are normalized. |
+| `GT_resids` | Four named, ordered G-tracts, each containing an ordered list of 1-based residue indices. |
+| `polarity_pattern` | A string of `a` and `s` characters, one per tetrad/layer. Its length must match every G-tract's length. |
+| `helicity` | `"RH"` or `"LH"`. The corresponding stored template must be available for CLI preparation. |
+| `force_field` | A GROMACS short force-field name or a positive integer menu number. |
+
+Every G-tract must have at least two residues. All listed residues must exist in
+the sequence and be guanine, and indices must be unique across all tracts.
+Dictionary order and the order within each tract define correspondence to the
+reference template; preserve the intended order rather than sorting the indices.
+
+**Force-field menu numbers depend on the GROMACS installation.** The number `4`
+in the example is an example selection, not a universal force-field identifier.
+Choose the appropriate value for your installation. The lower-level API can
+display the available menu before selection.
+
+#### Optional entries
+
+| Entry | Default | Meaning |
+| --- | --- | --- |
+| `gromacs_executable` | `"gmx"` | GROMACS command or executable path. |
+| `dielectric_const` | `15` | Positive dielectric constant written to the simulation MDP's `epsilon_r`. |
+| `saving_stride` | `5000` | Positive number of MD steps between compressed trajectory frames and PLUMED output records. |
+| `after_folding_steps` | `2500000` | Nonnegative number of additional MD steps after the protocol's final step. |
+| `max_bulge_length` | `3` | Maximum number of intervening sequence residues retained within a reference block. Larger gaps split a G-tract into blocks. |
+| `n_frames` | `5` | Positive number of distinct low-RMSD times to select for extraction. |
+| `schedule` | Values shown above | Restraint timings, targets and force constants. Omitted schedule fields use defaults. |
+
+The CLI fixes the timestep at **0.002 ps**. `dt_ps` is configurable through the
+Python API but is rejected in CLI JSON, even if set to its default value.
+Execution settings and trajectory paths are supplied through commands or API
+method arguments; the JSON has no `preparation`, `run`, `extract` or `logging`
+blocks. There are no aliases for input names.
+
+#### Restraint schedule
+
+Each stage row is `[step, target, kappa]`. Step values must be nonnegative
+integers and strictly increase within each stage list. Targets and force
+constants must be finite and nonnegative.
+
+| Schedule field | Interpretation |
+| --- | --- |
+| `gt_initial` | Initial G-tract restraint stages, with steps measured from the simulation start. |
+| `core_start` | Starting step for the first cumulative core restraint; must follow the last GT-initial stage. |
+| `core_spacing` | Positive interval between the starts of successive core restraints. |
+| `core` | Stage offsets relative to each core restraint's start. |
+| `tetrads` | Stage offsets relative to the tetrad restraint start; at least two stages are required. |
+
+Core restraint blocks overlap when their stages extend beyond the next block's
+starting step.
+
+For `n_core` cumulative core references, tetrad restraints start at:
+
+```text
+tetrad_start = core_start + n_core * core_spacing
+```
+
+G-tract restraints hold the final `gt_initial` force constant until
+`tetrad_start`, then reach zero at the second tetrad stage's offset.
+`gt_hold_kappa` and `gt_release_offset` are derived properties, not input fields.
+The protocol length is the largest step used by any restraint, and the total
+simulation length adds `after_folding_steps`.
+
+The generated protocol uses upper-wall `MOVINGRESTRAINT` restraints
+(`VERSE=U`); PLUMED interpolates targets and force constants between stage
+points. See the [PLUMED MOVINGRESTRAINT documentation](https://www.plumed.org/doc-v2.10/user-doc/html/_m_o_v_i_n_g_r_e_s_t_r_a_i_n_t.html).
+The writer does not change PLUMED's default units: RMSD targets are in nm,
+time output is in ps, and RMSD restraint force constants use kJ/mol/nm².
+PDB coordinates remain in Å. See [PLUMED units](https://www.plumed.org/doc-v2.10/user-doc/html/_u_n_i_t_s.html).
+
+### Extract from explicit trajectory files
+
+Use these flags for a simulation run outside the client, or to override the
+recorded output paths:
+
+```bash
+# One trajectory part in the run directory.
+g4-builder extract -w runs/example -trj smd.part0001.xtc
+
+# Several parts, supplied in chronological order.
+g4-builder extract -w runs/example \
+    -trj smd.part0001.xtc smd.part0002.xtc \
     -s smd.tpr -colvar COLVAR
 ```
 
-Preparation reads simulation settings from [examples/input.json](examples/input.json).
-Mandatory fields are `sequence`, `GT_resids`, `polarity_pattern`, `helicity`, and
-`force_field`. Omitted optional fields use `SimulationConfig` defaults. All
-input names are identical to the Python API. JSON contains only simulation
-fields: no `preparation`, `run`, `extract` or `logging` blocks. Unknown keys,
-duplicate keys, and invalid values raise errors. No aliases or name migrations
-are performed, including when loading saved metadata.
-
-`prepare_nogmx` writes strand, references, PLUMED protocol and run metadata.
-`prepare` additionally performs topology generation, boxing, minimization and
-simulation TPR preparation. It can continue a matching offline preparation.
-Completed stages are reused. `--overwrite` explicitly regenerates inputs and
-does not delete old MD outputs; a fresh directory is preferable for a new run.
-Existing preparation settings must match the JSON, except the executable and
-number of extracted frames may be updated by repeating preparation.
-
-`run_sim` and `extract` load `run.json` for configuration, protocol duration,
-full-core RMSD label and recorded output paths. Extraction accepts:
-
-| Flag | Meaning | If omitted |
+| Flag | Input | Default when omitted |
 | --- | --- | --- |
-| `-trj`, `--trajectories` | One XTC or an ordered list of parts | Recorded simulation trajectories; error if none are recorded |
-| `-s`, `--structure` | Structure/TPR input | Recorded structure or prepared TPR |
-| `-colvar`, `--colvar` | COLVAR input | Recorded COLVAR or working_dir/COLVAR |
+| `-trj`, `--trajectories` | One XTC path or an ordered list of paths | Trajectories recorded by `run_sim`; required explicitly if no outputs are recorded |
+| `-s`, `--structure` | Matching structure or TPR file | Recorded structure, otherwise the prepared simulation TPR |
+| `-colvar`, `--colvar` | COLVAR file | Recorded COLVAR, otherwise the run directory's default COLVAR |
 
-For extraction, bare filenames such as `smd.part0001.xtc` resolve from
-`--working-dir`. Relative paths containing directories, such as
-`testing/new_run/smd.part0001.xtc`, resolve from the terminal's current directory.
-Absolute paths are also accepted, and `~` is expanded. The JSON filename and the
-working-directory flag are relative to the terminal's current directory.
-Multiple trajectory parts are joined with `trjcat` before extraction.
-The saved `n_frames` determines the number of extracted structures.
+Extraction uses the saved full-core RMSD label and protocol duration. The
+number of frames comes from `n_frames` in the saved configuration. All input
+files must belong to the same simulation, with matching atom order.
 
-CLI-only policy fixes the timestep at 0.002 ps, pdb2gmx timeout at 60 s, discovery
-timeout at 2 s, and run/extraction timeout unlimited. These values remain
-configurable in the Python API. `dt_ps` must not appear in CLI JSON, even with
-its default value. CLI logging writes full output to gromacs.log with brief
-console messages; API callers may configure logging themselves.
+### Path rules
 
-For both API and CLI, the commands always use `-maxwarn 1` for minimization
-preparation, `-maxwarn 2` for simulation preparation, `-cpi` for simulation
-execution, and the `System` group for frame extraction. These are not options.
+`--input` and `--working-dir` resolve relative to the terminal's current
+directory. For extraction inputs, in both the CLI and Python API:
 
-Use `g4-builder --help` or `g4-builder extract --help` to inspect available flags.
-Runtime failures return exit code 1, parser errors 2 and handled interruption 130.
+| Supplied path | Resolution |
+| --- | --- |
+| `smd.part0001.xtc` | A bare filename: relative to the run's working directory |
+| `results/smd.part0001.xtc` | A path containing directories: relative to the caller's current directory |
+| `/data/run/smd.part0001.xtc` | Absolute path: used directly |
 
-## Installation and environment
+User-home paths such as `~/results/part1.xtc` are expanded. These rules apply
+to trajectories, structures and COLVAR, independently for every list entry.
+Output frames are always written to the runner's working directory.
 
-From the project directory, imports work immediately in `jupyter_env`. To
-make them available when Python starts elsewhere, install the package:
+### Reuse prepared runs
 
-```bash
-conda run -n jupyter_env python -m pip install -e . --no-build-isolation --no-deps
-```
+Each successful stage updates `run.json` with the validated settings, reference
+metadata, protocol duration, completed stages and available results. It is
+generated run metadata, distinct from the user input JSON.
 
-NumPy and pandas must already be installed with that command. Normal
-`pip install .` also installs the declared Python dependencies. GROMACS and
-PLUMED are external programs, not Python dependencies.
+Repeating `prepare` with matching settings reuses completed preparation stages.
+The executable and `n_frames` may be updated without rebuilding the model;
+other configuration changes require a new directory or explicit `--overwrite`.
+`--overwrite` regenerates input files and run metadata but does not delete
+existing MD output files. Use a fresh directory for a different simulation.
 
-GROMACS is only needed when running command stages. Activate its environment
-before starting Python/Jupyter, for example `spack load /34tpcvn`. Running the
-SMD stage requires a GROMACS build with PLUMED support. Offline preparation
-does not look for GROMACS or start any subprocesses.
+`run_sim` uses `-cpi` and `-noappend`. GROMACS uses an available checkpoint for
+continuation and writes numbered output parts; keep checkpoint files when
+continuing a simulation. See the [GROMACS mdrun documentation](https://manual.gromacs.org/current/onlinehelp/gmx-mdrun.html).
 
-## Default filenames and derived GROMACS outputs
+Use `g4-builder --help` or `g4-builder extract --help` for parser help. Exit
+codes are 0 for success, 1 for handled runtime errors, 2 for argument errors,
+and 130 for an interrupted command.
 
-[g4_builder/data/file_names.json](g4_builder/data/file_names.json) defines package-level
-filenames, including the two TPR inputs: `"em_tpr": "em.tpr"` and
-`"tpr": "smd.tpr"`. It does not contain prefix settings or MD output names.
-`RunPaths(working_dir)` reads this file to construct all run paths. There is no
-`prefix` field in `SimulationConfig` or input JSON, and no prefix argument to
-`RunPaths`.
-
-`RunPaths` takes each TPR filename's stem as `mdrun -deffnm`. Thus `em.tpr`
-produces prefix `em`, and `smd.tpr` produces prefix `smd`. Simulation MDP, PDB
-and trajectory-part names are derived in code, without duplicate definitions
-in JSON. For example, changing `tpr` to `fold.tpr` yields `fold.mdp`, `fold.pdb`,
-and `fold.part*.xtc`. PDB output is explicitly requested with `-c`;
-other MD outputs follow GROMACS's `-deffnm` convention.
-
-Simulation execution always uses `-noappend` and discovers only numbered XTC
-parts such as `smd.part0001.xtc`. There is no plain `smd.xtc` default path or
-fallback. Extraction still accepts any explicitly supplied XTC file path.
-
-The file retains independent filenames for references, COLVAR, application
-logging, metadata and analysis outputs. Patterns use `{name}` for reference
-identifiers and `{index}` for frame numbers. The packaged MDP template source
-filenames are also defined there and are independent of the generated names.
-
-Change this package data file before preparing a new run if you want different
-defaults. Keep the same definitions throughout preparation, execution and
-resumption; do not rename outputs of an existing run by changing the defaults
-midway. Installed packages include this JSON resource.
-
-## Python API usage
-
-See [the pipeline example notebook](notebooks/api_pipeline.ipynb) for dictionary
-and JSON configuration options, staged preparation and optional local simulation.
-See [the step-by-step example notebook](notebooks/api_step_by_step.ipynb) for
-the individual API calls without the pipeline, including instructions for
-running the simulation on another machine and extracting frames after transfer.
+## Python API
 
 ```python
-from g4_builder import SimulationConfig, FoldingPipeline, configure_logging
+import g4_builder as g4
+```
 
-config = SimulationConfig(
+The pipeline coordinates the same components that can be called individually.
+Executable examples are available in the [pipeline notebook](notebooks/api_pipeline.ipynb)
+and [step-by-step notebook](notebooks/api_step_by_step.ipynb).
+
+### Configure a pipeline
+
+Choose one of the following configuration methods. Both loaders require
+`working_dir` as a separate argument and reject that key inside the dictionary
+or JSON file.
+
+**From JSON:**
+
+```python
+config = g4.SimulationConfig.from_json(
+    "examples/input.json",
+    working_dir="runs/api_example",
+)
+```
+
+**From a dictionary:**
+
+```python
+settings = {
+    "sequence": "GGGTAGGGCGGCGGGGCAGGGT",
+    "GT_resids": {
+        "GT_1": [11, 1, 2],
+        "GT_2": [8, 7, 6],
+        "GT_3": [19, 20, 21],
+        "GT_4": [15, 14, 13],
+    },
+    "polarity_pattern": "ssa",
+    "helicity": "RH",
+    "force_field": 4,
+}
+config = g4.SimulationConfig.from_dict(settings, working_dir="runs/api_example")
+```
+
+**Using constructor arguments:**
+
+```python
+config = g4.SimulationConfig(
     sequence="GGGTAGGGCGGCGGGGCAGGGT",
     GT_resids={
         "GT_1": [11, 1, 2],
@@ -137,106 +342,82 @@ config = SimulationConfig(
         "GT_3": [19, 20, 21],
         "GT_4": [15, 14, 13],
     },
-    polarity_pattern="saa",
+    polarity_pattern="ssa",
     helicity="RH",
-    working_dir="testing/new_run",
-    force_field="amber99bsc1",  # Use the short -ff name on your installation.
-    gromacs_executable="gmx",
-    dielectric_const=80,
-    saving_stride=5000,
-    after_folding_steps=2_500_000,
-    n_frames=5,
+    force_field=4,
+    working_dir="runs/api_example",
+    dt_ps=0.002,
 )
+```
 
-pipeline = FoldingPipeline(config)
-configure_logging(pipeline.paths.log)  # Optional; full output in gromacs.log.
+The API accepts the CLI settings plus `dt_ps`, a positive timestep in ps.
+Constructing a config validates its values; it does not create files or run
+GROMACS. Configs are immutable; use `dataclasses.replace()` to derive changes:
 
-# Offline: creates the directory, strand, references, PLUMED file, run.json.
-result = pipeline.prepare()
+```python
+from dataclasses import replace
 
-# Inspect these before running external commands.
-print(result.protocol_steps, result.simulation_steps)
-print(result.full_ref_label)
-print(pipeline.references.ref_info)
-print(pipeline.protocol.text)
+config = replace(config, schedule=g4.ScheduleConfig(core_spacing=3_000_000))
+```
 
-# Explicit external-command stages:
-pipeline.minimize()
-pipeline.prepare_simulation()
+Dictionary and JSON loaders accept a nested schedule dictionary. The direct
+constructor expects a `ScheduleConfig` object. `config.to_dict()` exports
+JSON-compatible settings without `working_dir`. The export includes the
+API-only `dt_ps` field; omit it if preparing a JSON file for the CLI.
 
-# Run only with a PLUMED-enabled GROMACS installation:
+### Run the pipeline
+
+```python
+pipeline = g4.FoldingPipeline(config)
+g4.configure_logging(pipeline.paths.log)
+
+result = pipeline.prepare()       # Strand, references, protocol and run.json.
+pipeline.minimize()               # Topology, reference remapping, box and EM.
+pipeline.prepare_simulation()     # Simulation MDP and TPR.
+
+# Run these after preparation with a PLUMED-enabled GROMACS executable.
 pipeline.run()
 result = pipeline.extract()
 
-print(result.best_frames)  # {time_in_ps: rmsd}, ordered from lowest RMSD.
-print(result.frame_paths)  # {1: Path(.../frame_1.pdb), ...}
+print(result.protocol_steps, result.simulation_steps)
+print(result.full_ref_label)
+print(result.best_frames)         # {time_ps: RMSD}, ranked by RMSD.
+print(result.frame_paths)         # {1: Path(...), 2: Path(...), ...}
 ```
 
-Choose a new directory for a new simulation. `prepare()` refuses to overwrite
-existing run inputs by default. `prepare(overwrite=True)` explicitly replaces
-inputs, but does not clean out old trajectory files; use it only when that is
-intended. Command stages also use GROMACS's usual output/backup behavior.
-
-`configure_logging()` installs brief console messages and a detailed append-only
-log. Importing or constructing library objects does not install handlers or
-open log files. You may instead configure the `g4_builder` Python logger in
-your application. GROMACS stdout/stderr are streamed to logging and are never
-returned by command methods. Command errors raise exceptions and log their
-diagnostics. Set the console level to `logging.DEBUG` to display full output.
-Reference and extracted-frame save methods still print their names and paths.
-
-## What each stage does
-
-| Stage | Behavior |
+| Method | Behavior |
 | --- | --- |
-| `prepare()` | Validates geometry/template correspondence; builds strand and full/partial references; generates PLUMED text and metadata. |
-| `minimize()` | Runs `pdb2gmx`, checks reference atom serials against processed atom identifiers, prints a notice and remaps/saves references only if they changed, updates PLUMED, adds the box, prepares and runs minimization. |
-| `prepare_simulation()` | Uses protocol steps plus post-folding steps to render the MDP, then creates the package-defined simulation TPR. |
-| `run()` | Runs PLUMED-enabled `mdrun` with `-cpi` and `-noappend`; records actual XTC part filenames. |
-| `extract()` | Selects post-protocol COLVAR minima using the full-core RMSD label and writes ranked PDB frames. |
+| `prepare(overwrite=False)` | Build and save the strand, full/partial references and PLUMED protocol without calling GROMACS. Refuse to replace existing run inputs unless explicitly allowed. |
+| `minimize(pdb2gmx_timeout=60, discovery_timeout=2)` | Generate topology, detect and remap changed reference atom serials, regenerate the protocol, add a box, prepare and run energy minimization. |
+| `prepare_simulation()` | Create the simulation MDP and TPR using protocol length plus post-folding steps. |
+| `run(timeout=None)` | Run the PLUMED simulation and record the actual numbered XTC output paths. |
+| `extract(trajectories=None, structure=None, colvar=None, n=None, timeout=None)` | Select and extract frames using recorded outputs or explicit file overrides. `n` overrides the configured `n_frames`. |
 
-Stages return the same inspectable `RunResult`. GROMACS wrapper methods return
-`None`. All paths are available via `pipeline.paths`, and reference paths via
-`result.reference_paths`. Input residue lists are 1-based and ordered; tract
-dictionary order defines template correspondence. Four tracts of equal length
-are required, with at least two residues per tract. Each selected residue must
-be guanine, and tract length must match the polarity-pattern length.
+Stages return the same `RunResult` object. It contains paths, protocol and
+simulation step counts, the full-core label, reference paths, completed stages,
+simulation outputs and extraction results. Intermediate objects are available
+as `pipeline.strand`, `pipeline.references`, `pipeline.protocol` and, after
+extraction, `pipeline.extractor`. `pipeline.paths.to_dict()` lists all planned
+paths and patterns, including files not yet created.
 
-### Files required in the simulation directory
-
-**All partial reference PDB files, the PLUMED protocol file and the GROMACS
-simulation input (`.tpr`) must be in the same directory when running the
-simulation. Run GROMACS with that directory as its working directory.**
-`build_protocol()` writes bare reference filenames such as `ref_1.pdb`; it
-does not accept a reference-directory option. The pipeline places these files
-in `pipeline.paths.working_dir` and runs GROMACS there automatically.
-
-By default, template combinations come from the stored package data. A missing
-polarity/helicity template raises `FileNotFoundError`. The lower-level
-`build_references(..., build_template=True)` call can instead generate a template
-from the packaged flat layers, as described below.
-
-## Resume or analyze a run from another session
-
-After every successful pipeline stage, `run.json` records the validated config,
-protocol duration and label, reference metadata, completed stages and known
-outputs. It does not auto-skip stages or restart failed commands.
+### Restore a pipeline or analyze an external run
 
 ```python
-pipeline = FoldingPipeline.from_directory("testing/new_run")
-configure_logging(pipeline.paths.log)
+pipeline = g4.FoldingPipeline.from_directory("runs/api_example")
+g4.configure_logging(pipeline.paths.log)
 
-# For example, if minimization was the last completed stage:
+# Call the next required stage, for example after minimization:
 pipeline.prepare_simulation()
-# pipeline.run()
 ```
 
-If you launch MD externally, supply its trajectory path explicitly:
+Restoration reads `run.json` and prepared files without starting GROMACS.
+Paths within a run directory are relocated when the entire directory is moved;
+external absolute paths retain their original locations. API stages run when
+called; unlike CLI preparation, they do not automatically skip completed stages.
+
+For a simulation run separately, supply its trajectories explicitly:
 
 ```python
-result = pipeline.extract(trajectories="smd.part0001.xtc")
-
-# Multiple restart parts are joined with trjcat before frame extraction:
 result = pipeline.extract(
     trajectories=["smd.part0001.xtc", "smd.part0002.xtc"],
     structure="smd.tpr",
@@ -245,208 +426,356 @@ result = pipeline.extract(
 )
 ```
 
-Bare filenames resolve from the working directory; relative paths containing
-directories resolve from Python's current directory. Absolute paths are accepted.
-These rules apply to trajectories, the structure input and COLVAR. For an
-internally executed run, `extract()` uses the output paths recorded by `run()`.
-The prepared TPR is used as the structure input so extraction uses authoritative
-topology atom ordering. Metadata can be restored after moving the whole run
-directory; paths inside the old directory are relocated. Externally referenced
-absolute paths are preserved and may need explicit replacements.
+### Lower-level API: prepare files step by step
 
-COLVAR and the selected trajectories must cover the same run. Selection is
-stable by RMSD, uses one entry per rounded integer time, and requires at least
-`n` distinct post-protocol times. Times are picoseconds. The protocol boundary
-is `protocol_steps * dt_ps`, and that same `dt_ps` is written into the MDP
-(default 0.002 ps). `trjconv -dump` selects the nearest saved trajectory frame;
-matching COLVAR/trajectory output strides is recommended. If COLVAR extends
-beyond available trajectory files, supply the matching files/data rather than
-expecting COLVAR alone to establish the XTC duration.
-
-For lower-level extraction, configure only the shared runner on the object and
-pass each operation its own inputs:
+This example uses the individual components without `FoldingPipeline` or an
+input configuration file. Choose the force field for your installation before
+running the topology step.
 
 ```python
 import g4_builder as g4
 
+runner = g4.GromacsRunner("runs/manual_example", executable="gmx")
+paths = runner.paths
+paths.working_dir.mkdir(parents=True, exist_ok=False)
+g4.configure_logging(paths.log)
+
+# Build and save the strand.
+strand_builder = g4.DNAStrandBuilder()
+strand = strand_builder.build("GGGTAGGGCGGCGGGGCAGGGT")
+strand_builder.save_pdb(paths.strand)
+
+# Build and save references using ordered, 1-based residue indices.
+GT_resids = {
+    "GT_1": [11, 1, 2],
+    "GT_2": [8, 7, 6],
+    "GT_3": [19, 20, 21],
+    "GT_4": [15, 14, 13],
+}
+references = g4.build_references("ssa", "RH", strand, GT_resids)
+references.save_full_ref(paths.full_ref)
+references.save_partial_refs(paths.working_dir)
+
+# Generate topology and inspect any changes to reference atom numbering.
+preparation = g4.GromacsPreparation(runner)
+print(preparation.discover_force_fields())
+preparation.pdb2gmx(force_field=4)
+processed = g4.read_pdb(paths.conf)
+if references.needs_serial_remap(processed):
+    print("Reference atom serials changed; remapping references.")
+    references.remap_serials(processed)
+    references.save_full_ref(paths.full_ref)
+    references.save_partial_refs(paths.working_dir)
+
+# Add the box and minimize.
+preparation.add_box()
+preparation.prep_enmin_file()
+preparation.run_enmin()
+
+# Generate the protocol using the processed structure's atom serials.
+protocol = g4.build_protocol(
+    references,
+    atom_serials=processed["serial"],
+    schedule=g4.ScheduleConfig(),
+    print_stride=5000,
+    print_file=paths.colvar.name,
+)
+protocol.write(paths.plumed)
+
+# Render the MDP and prepare the simulation TPR.
+preparation.prep_sim_file(
+    n_steps=protocol.final_steps + 2_500_000,
+    saving_stride=5000,
+    dielectric_const=15,
+    dt_ps=0.002,
+)
+```
+
+Each GROMACS preparation method returns `None` and records successful outputs
+in `preparation.saved_paths`. `pdb2gmx()` accepts an optional `strand` PDB path;
+without it, the input is `paths.strand`. Relative strand overrides resolve from
+the runner's working directory. `discover_force_fields(timeout=2, strand=None)`
+stores and returns a menu-number-to-name dictionary.
+
+The wrappers use fixed command choices: TIP3P in `pdb2gmx`, a centered
+dodecahedron box with `editconf -d 1.4`, `grompp -maxwarn 1` for minimization,
+and `grompp -maxwarn 2` for the simulation. Simulation execution always uses
+`-cpi`, `-noappend`, `-v` and `-plumed`; frame extraction selects `System`.
+These are not configuration entries or method options. The packaged MDP files
+provide the remaining simulation settings.
+
+### Lower-level API: run and extract
+
+With PLUMED-enabled GROMACS, continue the manual preparation example with:
+
+```python
+preparation.run_sim(timeout=None)
+
 extractor = g4.TrajectoryFrameExtractor(runner)
-extractor.find_best_frames(
+best_frames = extractor.find_best_frames(
     rmsd_label=protocol.full_ref_label,
     protocol_steps=protocol.final_steps,
-    colvar="COLVAR", n=5, dt_ps=0.002,
+    colvar=paths.colvar,
+    n=5,
+    dt_ps=preparation.dt_ps,
 )
 extractor.extract_frames(
-    trajectories=["smd.part0001.xtc", "smd.part0002.xtc"],
-    structure="smd.tpr",
+    trajectories=preparation.outputs.trajectories,
+    structure=preparation.outputs.structure,
+    timeout=None,
 )
+
+print(best_frames)
+print(extractor.saved_paths)
 ```
 
-Selection reads COLVAR only; it needs no trajectory, structure or GROMACS
-execution. The selected `{time_ps: RMSD}` mapping is returned and stored in
-`extractor.best_frames`. Extraction uses that selection, prints output paths and
-stores them in `extractor.saved_paths`. Starting a new selection clears both
-results, including if selection fails. The same object can be reused for another
-selection or a different set of trajectory files.
+`TrajectoryFrameExtractor` takes only a runner at construction. Selection reads
+COLVAR and does not require a trajectory, structure or GROMACS execution.
+`colvar=None` uses the default path. Extraction takes one trajectory path or an
+ordered iterable of parts and a matching structure/TPR path; several parts are
+joined with `trjcat` before `trjconv` is run for each selected time.
 
-## Lower-level API
+`find_best_frames()` returns and stores `{time_ps: RMSD}` in `best_frames`.
+Every new selection clears the previous selection and saved paths, including
+when selection fails. `extract_frames()` requires a successful selection,
+returns `None`, prints saved paths and records them in `saved_paths`.
 
-The individual components remain usable without the pipeline:
+Manual component calls do not create pipeline `run.json` metadata. Retain the
+protocol's `final_steps`, `full_ref_label` and timestep if selecting frames
+in a later session.
 
-```python
-from g4_builder import (
-    DNAStrandBuilder, build_references, build_protocol, ScheduleConfig,
-    GromacsRunner, GromacsPreparation, read_pdb,
-)
+### Lower-level API: structures and references
 
-# The runner owns the shared paths and controls subprocess execution.
-# Constructing it does not launch GROMACS or create the working directory.
-runner = GromacsRunner(config.working_dir, config.gromacs_executable)
-paths = runner.paths
-gromacs = GromacsPreparation(runner)
-
-strand_builder = DNAStrandBuilder()
-strand = strand_builder.build(config.sequence)
-
-references = build_references(
-    config.polarity_pattern, config.helicity, strand, config.GT_resids,
-    max_bulge_length=config.max_bulge_length,
-)
-# references is a fully built ReferenceSet: full reference, partials and metadata.
-paths.working_dir.mkdir(parents=True, exist_ok=True)
-strand_builder.save_pdb(paths.strand)
-references.save_full_ref(paths.full_ref)
-protocol = build_protocol(references, strand.serial, schedule=config.schedule,
-                          print_stride=config.saving_stride, print_file=paths.colvar.name)
-protocol.write(paths.plumed)
-references.save_partial_refs(paths.working_dir)  # Prints; paths in references.saved_paths.
-
-# After pdb2gmx, check atom identities and update changed serial numbers:
-# processed = read_pdb(paths.conf)
-# if references.needs_serial_remap(processed):
-#     references.remap_serials(processed)
-#     references.save_full_ref(paths.full_ref)
-#     references.save_partial_refs(paths.working_dir)
-
-# Force-field discovery is explicit:
-# print(gromacs.discover_force_fields())
-```
-
-`GromacsPreparation(runner)` and `TrajectoryFrameExtractor(runner)` use
-`runner.paths` directly. Supply the timestep when calling
-`gromacs.prep_sim_file(..., dt_ps=0.002)` and
-`extractor.find_best_frames(..., dt_ps=0.002)`.
-`FoldingPipeline` also shares that object, so the working directory and filename
-defaults are defined once per runner. Use `runner.paths` to inspect or save inputs;
-`runner.working_dir` is a property exposing its working directory. A runner passed
-to the pipeline must use the configuration's working directory.
-`RunPaths(directory)` remains available for inspecting filenames independently.
-Custom runners should subclass `GromacsRunner` and override `run()` / `probe()`
-as needed, retaining the shared paths initialized by its constructor.
+`DNAStrandBuilder(nucleotide_dir=None)` loads 12 packaged nucleotide templates
+for 5′, middle and 3′ positions. `build(sequence, chain_id="A")` aligns
+consecutive templates using their phosphate anchors and returns the strand
+DataFrame. At least two bases are required by the terminal template set.
+Custom nucleotide templates can be supplied through `nucleotide_dir`.
 
 `build_references(polarity_pattern, helicity, strand, GT_resids,
-max_bulge_length=3, template_dir=None, build_template=False)` returns a fully built
-`ReferenceSet`. It reads the template, validates atom correspondence and creates the full and
-partial reference tables without writing files or changing the inputs.
-There is no separate builder object or intermediate build state.
+max_bulge_length=3, template_dir=None, build_template=False)` returns a
+`ReferenceSet` containing `full_ref`, `entries`, `partial_refs`, `ref_info` and
+`full_ref_label`. Partial references cover G-tract blocks, cumulative cores and
+individual tetrads. Template atom names must match the strand's selected base
+atoms row for row before coordinates are copied.
 
-To generate the template from planar layers instead of loading a stored stack:
+Each `ReferenceSet.entries` record contains its name, category, ordered residue
+indices, RMSD label and atom DataFrame. Its `is_full_core` flag identifies the
+final cumulative core used for frame selection.
+
+The stored template collection contains every a/s pattern for:
+
+| Helicity | Number of tetrads |
+| --- | --- |
+| RH | 2 or 3 |
+| LH | 2 |
+
+Loading is the default for the pipeline and CLI. A missing stored template
+raises `FileNotFoundError`. To build a template from planar a/s layers instead:
 
 ```python
-references = build_references(
-    config.polarity_pattern, config.helicity, strand, config.GT_resids,
+references = g4.build_references(
+    "ssa", "RH", strand, GT_resids,
     build_template=True,
+)
+
+# Generate a template DataFrame directly, without mapping it to a strand.
+template = g4.build_reference_template("sass", "LH")
+```
+
+`build_template` is a lower-level function option only; it is not a
+`SimulationConfig` field, JSON entry, CLI flag or pipeline option. When a
+`template_dir` is supplied, loading reads
+`<template_dir>/<helicity>_<n>tet/<pattern>.pdb`; building reads the a/s PDBs
+inside `<template_dir>/layers/`. Direct `build_reference_template()` calls
+accept `layer_dir` to override the flat-layer directory.
+
+The flat layers must contain residues 1–4 with finite coordinates in the Z=0
+plane. Rise and signed twist values are read on every template build from
+[g4_builder/data/stack_properties.json](g4_builder/data/stack_properties.json).
+Rise is in Å and twist in degrees; adjacent-pair transformations accumulate
+relative to the preceding layer. Output residues are grouped by original
+residue number across layers before advancing to the next original residue.
+
+`ReferenceSet.save_full_ref(path)` and `save_partial_refs(directory)` save
+reference PDBs without TER/END records. Prepared references have
+`temp_factor=1.0`, with blank chain and element fields. Partial saving prints
+paths and stores them in `saved_paths`. Atom-serial remapping matches
+`(res_seq, atom_name)`, preserves coordinates and ordering, and rejects missing
+or ambiguous matches.
+
+Standalone PDB I/O is also available:
+
+```python
+atoms = g4.read_pdb("structure.pdb")
+g4.save_pdb(atoms, "copy.pdb", add_ter_end=False)
+```
+
+`read_pdb()` reads ATOM/HETATM records into columns `record_name`, `serial`,
+`atom_name`, `alt_loc`, `res_name`, `chain_id`, `res_seq`, `i_code`, `x`, `y`,
+`z`, `occupancy`, `temp_factor`, `seg_id`, `element` and `charge`. Coordinates
+are in Å. Blank optional numeric fields are represented by NaN.
+`save_pdb()` preserves row order and atom/residue numbers; its default
+`add_ter_end=True` adds TER and END records.
+
+## Simulation files and frame selection
+
+### Keep simulation inputs together
+
+**All partial reference PDBs, the PLUMED protocol and simulation TPR must be in
+the same directory when running the simulation.** Run GROMACS from that
+directory. `build_protocol()` writes bare reference filenames, and the pipeline
+places the required files together automatically.
+
+COLVAR must have its column labels on the first line, for example:
+
+```text
+#! FIELDS time rm1 rm2 rm3
+```
+
+The first column is time in ps; the requested RMSD label identifies the
+selection column. Selection filters times at or after
+`protocol_steps * dt_ps`, ignores non-finite time/RMSD values, rounds times to
+integer ps, and ranks records by increasing RMSD. Duplicate rounded times are
+removed, keeping the lowest RMSD. At least `n` distinct eligible times are
+required. Frame 1 corresponds to the lowest selected RMSD.
+
+Use the same timestep for simulation preparation and selection; the pipeline
+does this automatically. COLVAR and trajectories must cover the same run.
+`trjconv -dump` extracts the saved frame nearest each requested time; matching
+trajectory and COLVAR saving strides helps their samples correspond. Selection
+does not inspect XTC duration to detect mismatched COLVAR data.
+
+### Default output files
+
+With the supplied [file_names.json](g4_builder/data/file_names.json), the main
+artifacts are:
+
+| File | Purpose |
+| --- | --- |
+| `strand.pdb` | Constructed DNA strand |
+| `full_ref.pdb`, `ref_1.pdb`, … | Full and partial reference structures |
+| `plumed_protocol.dat` | Generated restraint protocol |
+| `conf.pdb`, `topol.top`, `posre.itp` | Topology-preparation outputs |
+| `conf_box.pdb` | Boxed structure |
+| `em.tpr`, `em.pdb` | Minimization input and minimized structure |
+| `smd.mdp`, `smd.tpr` | Simulation parameter file and run input |
+| `smd.part*.xtc` | Numbered simulation trajectory parts |
+| `COLVAR` | PLUMED time series used for frame selection |
+| `frame_1.pdb`, … | Extracted frames ranked by RMSD |
+| `extraction_trajectory.xtc` | Joined trajectory when extracting from multiple parts |
+| `gromacs.log` | Application log when configured by the CLI or API |
+| `run.json` | Pipeline state for later stages and restoration |
+
+Only the two MD TPR names are defined for stage naming: `em_tpr` and `tpr`.
+Their stems determine `mdrun -deffnm`; related names are derived in code.
+For example, changing `tpr` to `fold.tpr` produces a `fold.mdp` input and
+`fold.part*.xtc` trajectories. The final structure is requested with the base
+name `smd.pdb`; GROMACS applies part numbering under `-noappend`.
+
+There is no prefix setting in the input config and no default plain `smd.xtc`
+path. Filename patterns use `{name}` for references and `{index}` for frames.
+`RunPaths.to_dict()` returns absolute `Path` values and retains those patterns;
+it does not scan for existing files. Use `paths.reference("ref_1")` and
+`paths.frame(1)` for specific generated paths.
+
+The package data directory also contains the nucleotide/reference PDBs and
+`mdp/em.mdp` and `mdp/SMD.mdp` source templates. Edit maintained package data
+in an editable checkout to change package-wide defaults. Keep filename defaults
+consistent across all stages and machines for an existing run. Editing the
+top-level experimental template directories does not update packaged copies.
+
+## Run a simulation on another machine
+
+1. Complete preparation through the simulation TPR, using CLI `prepare` or
+   `pipeline.prepare_simulation()` after minimization.
+2. Copy the entire working directory to the simulation machine, keeping the
+   TPR, PLUMED protocol, references, run metadata and any checkpoints together.
+3. Activate a PLUMED-enabled GROMACS installation and run from inside that
+   directory. With the default filenames:
+
+   ```bash
+   gmx mdrun -deffnm smd -cpi -noappend -v -plumed plumed_protocol.dat -c smd.pdb
+   ```
+
+   Use the site's job-submission system when required. The Python package
+   is not needed remotely for this direct GROMACS command.
+4. Copy COLVAR and every required numbered XTC part back, preserving the TPR
+   used for simulation. Analyze the results locally with explicit paths:
+
+   ```bash
+   g4-builder extract -w runs/example \
+       -trj smd.part0001.xtc smd.part0002.xtc \
+       -s smd.tpr -colvar COLVAR
+   ```
+
+Running GROMACS directly does not update the pipeline's recorded output list,
+so explicit trajectory paths are required for this route. In a fresh Python
+session, restore the pipeline with `FoldingPipeline.from_directory()` and use
+`pipeline.extract(trajectories=...)`. Extraction still needs GROMACS locally,
+but does not need PLUMED support. If GROMACS is unavailable on the local machine,
+perform the GROMACS preparation stages on the remote machine as well.
+
+## Logging and troubleshooting
+
+The CLI configures INFO console messages and a detailed `gromacs.log` file.
+For the Python API, logging is opt-in:
+
+```python
+import logging
+
+g4.configure_logging(
+    log_file="runs/api_example/gromacs.log",
+    console=True,
+    console_level=logging.INFO,
 )
 ```
 
-This option exists only on `build_references`; configs, JSON, CLI and pipeline
-defaults continue loading stored templates. With `template_dir` supplied, loading
-reads `<template_dir>/<helicity>_<n>tet/<pattern>.pdb`, while building reads
-`<template_dir>/layers/a.pdb` and `s.pdb`.
+GROMACS stdout and stderr are streamed to the logger at DEBUG level rather
+than returned by command methods. File logging retains the full streams;
+set `console_level=logging.DEBUG` to show them in the console too. Repeated
+configuration replaces package-owned handlers. Applications can configure
+the `g4_builder` logger themselves instead. Without logging configuration,
+normal command messages are silent; failures still raise exceptions.
+Reference and extracted-frame save messages are printed directly.
 
-`g4_builder.build_reference_template(pattern, helicity, layer_dir=None)` is also
-available directly and returns the generated template DataFrame. It uses the
-packaged `data/reference_templates/layers/` files by default. Rise and signed
-twist values are defined in
-[g4_builder/data/stack_properties.json](g4_builder/data/stack_properties.json),
-which is loaded on each build. They accumulate for adjacent layer pairs.
-Residues are grouped across layers before advancing to the next original residue. The top-level
-`ref_from_scratch.py` imports this implementation rather than maintaining a copy.
-Editing top-level layer files does not change the packaged copies; use an
-explicit directory override when working with experimental layers.
+| Problem | What to check |
+| --- | --- |
+| GROMACS executable cannot be launched | Activate its environment before starting Python/Jupyter, or supply the executable path. |
+| Simulation rejects `-plumed` | Use a GROMACS executable with PLUMED support, or run the prepared simulation on another machine. |
+| Force-field menu number is unavailable | Choose a number from this installation's menu or use an available short name. |
+| Stored reference template is missing | Check helicity/pattern availability; use lower-level `build_template=True` when generating a template is intended. |
+| Extraction cannot find an input | Check the bare-filename versus directory-containing path rules, the run directory and supplied files. |
+| Too few eligible frames | Check the RMSD label, protocol duration, timestep and COLVAR coverage, or reduce `n_frames`/API `n`. |
+| Existing preparation conflicts with new settings | Use the matching settings, a new run directory or explicit preparation `--overwrite`. |
+| Notebook reports a config type mismatch after source edits | Restart the kernel, rerun imports and recreate the config; module reloads can leave different class versions in memory. |
 
-The resulting object provides `full_ref`, `partial_refs`, `ref_info`, `entries`
-and `full_ref_label`. Use `save_full_ref(path)` and `save_partial_refs(directory)`
-to write references without TER/END records; partial saving prints paths and
-records them in `references.saved_paths`. Use `needs_serial_remap(structure)`
-and `remap_serials(structure)` after topology preparation. The pipeline uses
-these same methods, and `RunResult.reference_paths` holds its partial file paths.
+API timeouts are supplied to operations, for example
+`pipeline.minimize(pdb2gmx_timeout=120, discovery_timeout=5)` or
+`pipeline.run(timeout=3600)`. The CLI uses a 60-second topology timeout,
+2-second force-field discovery timeout and no simulation/extraction timeout.
+Timeout and logging choices are not stored as simulation settings.
 
-Both the pipeline configuration and lower-level wrapper accept short force-field
-names or positive integer menu numbers, for example `force_field=4`. With a
-number, the menu is discovered automatically when `pdb2gmx` runs, then the
-selection is validated and sent through stdin. Construction and offline
-preparation still start no processes. Menu numbers depend on the installation;
-short names are more reproducible across installations. TIP3P remains fixed
-as in the existing implementation.
+## Development
 
-`gromacs.pdb2gmx(force_field, strand="inputs/custom.pdb")` accepts an optional
-strand PDB path. Relative paths use the runner's working directory. If omitted,
-it uses `runner.paths.strand`. Automatic force-field discovery uses the same
-supplied strand, so the default strand file is not required for this override.
+The maintained implementation is in `g4_builder/`, package assets in
+`g4_builder/data/`, JSON examples in `examples/`, and example notebooks in
+`notebooks/`. `pyproject.toml` defines dependencies, package data and the
+`g4-builder` console entry point. Importing `g4_builder` exposes the Python API;
+`python -m g4_builder` runs the same client as the installed command.
 
-`ReferenceSet.entries` holds each reference's name, category (`GT`, `core`, or
-`tetrads`), ordered residues, RMSD label and atom DataFrame. `is_full_core`
-identifies the final cumulative core explicitly; equal DataFrame sizes cannot
-make the label ambiguous. Block splitting and schedule timing are defined in the package configuration. `ScheduleConfig` separates those timings from formatting:
+`build/` and `g4_builder.egg-info/` are generated packaging artifacts. Make
+changes in the maintained package source rather than `build/lib/`. Reinstall
+after changing installation metadata; restart running kernels when needed
+after source changes.
 
-```python
-from dataclasses import replace
-modified = replace(config, schedule=ScheduleConfig(core_spacing=3_000_000))
-```
-
-`config.to_dict()` exports JSON-compatible input settings without `working_dir`.
-Supply the directory separately when loading a mapping:
-
-```python
-config = SimulationConfig.from_dict(config.to_dict(), working_dir="testing/new_run")
-```
-
-Load an input file directly through the Python API:
-
-```python
-config = SimulationConfig.from_json("examples/input.json", working_dir="testing/new_run")
-pipeline = FoldingPipeline(config)
-```
-
-This uses the same parameter names as the Python constructor, with defaults for
-omitted optional settings. API-only settings such as `dt_ps`
-are accepted here; the CLI restrictions do not apply. Both `from_dict()` and
-`from_json()` require a separate `working_dir` argument and reject that key in
-the input dictionary or JSON. Relative working directories resolve from Python's
-current working directory. The normal `SimulationConfig(...)` constructor still
-takes `working_dir` as an ordinary argument.
-Only simulation fields are accepted. Execution/file settings are passed to
-the corresponding methods, such as `pipeline.extract(trajectories=...)`,
-`pipeline.run(timeout=3600)` or `configure_logging(...)`. Unsupported blocks
-and unknown names raise errors; nothing is silently discarded or renamed.
-
-## Code layout and tests
-
-`g4_builder/config.py`, `paths.py`, `pdb_io.py`, `strand.py`, `references.py`,
-`protocol.py`, `runner.py`, `gromacs.py`, `extraction.py`, `pipeline.py` and
-`logging.py` separate the responsibilities. `g4_builder/data/` contains copies
-of the 12 nucleotide templates, supported reference templates, flat a/s layers
-and two MDPs.
-They are included in installed wheels. Editing the old top-level template
-files does not modify these package copies.
-
-Run the independent package tests using the project environment:
+Run the package tests from the project root:
 
 ```bash
-conda run -n jupyter_env python -m unittest discover -s tests_new -v
+python -m unittest discover -s tests_new -v
 ```
 
-They exercise offline preparation with the real templates, config validation,
-reference metadata and remapping, schedules, full pipeline orchestration with
-a fake GROMACS runner, metadata restoration, extraction and real subprocess
-logging/failure handling. They do not run molecular dynamics or require PLUMED.
+The tests cover real template geometry, reference mapping, protocol generation,
+configuration and CLI inputs, metadata restoration, extraction and subprocess
+logging. GROMACS workflow tests use a fake runner; they do not require a
+PLUMED-enabled executable or run molecular dynamics.

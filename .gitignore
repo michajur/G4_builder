@@ -6,6 +6,8 @@ __pycache__/
 g4_builder.egg-info/
 dev_notebook.ipynb
 TODO.txt
+INPUTS.md
+INSTALLATION_AND_PACKAGE_STRUCTURE.md
 notes.txt
 AGENTS.md
 *.pyc
