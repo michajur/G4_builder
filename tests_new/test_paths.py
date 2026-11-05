@@ -39,6 +39,9 @@ class PathTests(unittest.TestCase):
         self.assertEqual(paths.em_tpr.name, "em.tpr")
         self.assertEqual(paths.mdp.name, "smd.mdp")
         self.assertEqual(paths.tpr.name, "smd.tpr")
+        self.assertEqual(paths.trajectory, self.root / "smd.xtc")
+        self.assertEqual(paths.to_dict()["trajectory"], paths.trajectory)
+        self.assertNotIn("trajectory_parts", paths.to_dict())
         self.assertEqual(paths.frame(2).name, "frame_2.pdb")
         self.assertNotIn("prefix", {f.name for f in fields(SimulationConfig)})
         values = config(self.root).to_dict()
@@ -69,7 +72,7 @@ class PathTests(unittest.TestCase):
             self.assertTrue((work / "guanine_ref_1.pdb").is_file())
             self.assertIn("REFERENCE=guanine_ref_1.pdb", pipeline.protocol.text)
             self.assertIn("FILE=rmsds.dat", pipeline.protocol.text)
-            self.assertEqual(pipeline.result.outputs.trajectories[0].name, "fold.prod.part0002.xtc")
+            self.assertEqual(pipeline.result.outputs.trajectories, (work / "fold.prod.xtc",))
             md_runs = [args for args, _, _ in runner.calls if args[0] == "mdrun"]
             self.assertEqual(md_runs[0][md_runs[0].index("-deffnm") + 1], "relax.min")
             self.assertEqual(md_runs[1][md_runs[1].index("-deffnm") + 1], "fold.prod")

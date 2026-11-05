@@ -59,7 +59,7 @@ class FakeRunner(GromacsRunner):
                 output = self.working_dir / value("-c")
                 output.touch()
             else:
-                trajectory = self.working_dir / f"{value('-deffnm')}.part0002.xtc"
+                trajectory = self.working_dir / f"{value('-deffnm')}.xtc"
                 trajectory.touch()
                 Path(value("-c")).touch()
                 self.paths.colvar.touch()
@@ -97,20 +97,37 @@ class LibraryTests(unittest.TestCase):
         self.assertFalse(work.exists())
         self.assertFalse(runner.working_dir.exists())
 
-    def test_run_discovers_only_numbered_trajectory_parts(self):
+    def test_run_records_single_trajectory_and_ignores_old_parts(self):
         runner = FakeRunner(self.root)
         preparation = GromacsPreparation(runner)
         paths = runner.paths
         paths.tpr.touch()
         paths.plumed.touch()
         prefix = paths.simulation_prefix
-        for suffix in (".xtc", ".part0010.xtc", ".part0001.xtc"):
+        for suffix in (".part0010.xtc", ".part0001.xtc"):
             (self.root / f"{prefix}{suffix}").touch()
         preparation.run_sim()
-        self.assertEqual([path.name for path in preparation.outputs.trajectories],
-                         [f"{prefix}.part0001.xtc", f"{prefix}.part0002.xtc",
-                          f"{prefix}.part0010.xtc"])
-        self.assertIn("-noappend", runner.calls[-1][0])
+        self.assertEqual(preparation.outputs.trajectories, (paths.trajectory,))
+        self.assertEqual(paths.trajectory.name, "smd.xtc")
+        self.assertNotIn("-noappend", runner.calls[-1][0])
+        self.assertIn("-cpi", runner.calls[-1][0])
+
+    def test_run_requires_single_trajectory_and_colvar(self):
+        runner = FakeRunner(self.root)
+        preparation = GromacsPreparation(runner)
+        paths = runner.paths
+        paths.tpr.touch()
+        paths.plumed.touch()
+        # Old trajectory parts must not conceal a missing new output.
+        (self.root / "smd.part0001.xtc").touch()
+        for missing in (paths.trajectory, paths.colvar):
+            with self.subTest(missing=missing):
+                paths.trajectory.touch()
+                paths.colvar.touch()
+                missing.unlink()
+                with patch.object(runner, "run"), self.assertRaises(FileNotFoundError):
+                    preparation.run_sim()
+                self.assertIsNone(preparation.outputs)
 
     def test_reference_set_saves_full_and_partial_references(self):
         c = config(self.root)
@@ -258,7 +275,7 @@ class LibraryTests(unittest.TestCase):
         self.assertRegex(mdp, r"dt\s*=\s*0.004")
         self.assertIn("nsteps                  = 14500000", mdp)
         p.run()
-        self.assertEqual(p.result.outputs.trajectories[0].name, "smd.part0002.xtc")
+        self.assertEqual(p.result.outputs.trajectories[0].name, "smd.xtc")
         self.assertEqual(p.result.outputs.structure, p.paths.tpr)
         end = p.result.protocol_steps * p.config.dt_ps
         p.paths.colvar.write_text(f"#! FIELDS time {p.result.full_ref_label}\n"

@@ -29,7 +29,7 @@ in code. Neither prefixes nor derived MD output names are configurable entries.
 `RunPaths(working_dir)` also reads the metadata filename (default `run.json`).
 Keep those definitions unchanged throughout the stages of an existing run.
 With the supplied defaults, simulation files are lowercase `smd.mdp`, `smd.tpr`,
-`smd.pdb`, and `smd.part*.xtc`.
+`smd.pdb`, and `smd.xtc`.
 
 ```bash
 g4-builder prepare_nogmx -i examples/input.json -w testing/new_run
@@ -59,9 +59,9 @@ without `-colvar`, use the recorded COLVAR or `working_dir/COLVAR`.
 ### Path resolution
 
 - `--input` and `--working-dir` are relative to the terminal's current directory.
-- Bare extraction filenames such as `smd.part0001.xtc` resolve from `--working-dir`.
+- Bare extraction filenames such as `smd.xtc` resolve from `--working-dir`.
 - Relative extraction paths containing directories, such as
-  `testing/new_run/smd.part0001.xtc`, resolve from the terminal's current directory.
+  `testing/new_run/smd.xtc`, resolve from the terminal's current directory.
 - Absolute paths work in either case; `~` is expanded.
 - `gromacs_executable` is a command on PATH or an executable path. A relative
   executable path containing `/` is resolved from the caller's current directory.
@@ -221,7 +221,7 @@ extractor.find_best_frames(
     rmsd_label=protocol.full_ref_label, protocol_steps=protocol.final_steps,
     colvar="COLVAR", n=5, dt_ps=0.002,
 )
-extractor.extract_frames(trajectories="smd.part0001.xtc", structure="smd.tpr")
+extractor.extract_frames(trajectories="smd.xtc", structure="smd.tpr")
 ```
 
 `colvar=None` uses `runner.paths.colvar`. `find_best_frames` returns and stores

@@ -17,7 +17,7 @@ DataFrames and can be saved as PDB files.
 | NumPy | 1.23 or newer |
 | pandas | 1.5 or newer |
 | GROMACS | Required for topology generation, minimization, simulation-input preparation and frame extraction |
-| PLUMED-enabled GROMACS | Required for running the generated folding simulation |
+| PLUMED-enabled GROMACS | Required for running folding simulations |
 
 Strand construction, reference building and PLUMED protocol generation can run
 without GROMACS. GROMACS and PLUMED are external software; installing this
@@ -53,15 +53,11 @@ g4-builder --help
 python -m g4_builder --help
 ```
 
-Both commands use the same interface. The module form is also usable from the
-project root before installation. An installation is needed to import the
-package reliably from other directories, including `notebooks/`.
-
 ### Make GROMACS available
 
 Activate the environment that provides GROMACS before starting Python, Jupyter
 or the terminal client. On a cluster this may involve an environment module or
-Spack. Select the executable using `gromacs_executable` in the simulation
+Spack. Set the executable using `gromacs_executable` in the simulation
 settings, or `executable` when constructing a `GromacsRunner`.
 
 The executable may be a command on `PATH`, such as `gmx`, or an absolute path.
@@ -86,8 +82,8 @@ g4-builder prepare -i examples/input.json -w runs/example
 # Run with a PLUMED-enabled GROMACS installation.
 g4-builder run_sim -w runs/example
 
-# Extract the lowest-RMSD frames from the recorded simulation outputs.
-g4-builder extract -w runs/example
+# Extract the lowest-RMSD frames from the supplied trajectory.
+g4-builder extract -w runs/example -trj smd.xtc
 ```
 
 `prepare` can also be used directly in a new directory; it performs all the
@@ -103,15 +99,163 @@ preparation steps, including those in `prepare_nogmx`.
 All modes require `-w/--working-dir`. Preparation modes additionally require
 `-i/--input` and accept `--overwrite`. `run_sim` and `extract` do not accept
 an input JSON: they use the configuration and protocol information recorded
-during preparation.
+during preparation and stored inside the working directory.
 
 ### Input JSON
 
-The input contains simulation settings only. Supply `working_dir` through the
-CLI flag, not inside the JSON. Missing optional entries use their defaults.
+All simulation settings for CLI preparation are provided through the input
+JSON file. Supply the working directory separately with `-w/--working-dir`;
+do not include `working_dir` in the JSON. Extraction file paths are supplied
+through their own CLI flags. Missing optional entries use their defaults.
 Unknown fields and duplicate JSON keys raise errors.
 
-The following complete example uses the default optional settings and schedule:
+**Required entries**
+
+#### `sequence`
+
+DNA sequence written in the 5′ → 3′ direction, using `A`, `T`, `G` and `C`.
+At least two bases are required.
+
+#### `GT_resids`
+
+An object containing four lists of 1-based residue indices identifying
+guanosines in `sequence`. The lists define the four G-columns in the G4
+structure, in counterclockwise order. Their order in the JSON object determines
+their correspondence to the reference template; the example names them
+`GT_1` through `GT_4`.
+
+Within each list, residues are ordered from the bottom tetrad to the top.
+For example, `"GT_1": [11, 1, 2]` places G11 in the bottom tetrad, G1 in the
+middle tetrad and G2 in the top tetrad. All four lists must have the same
+length, which defines the number of tetrads in the resulting G4 structure.
+
+Each list must contain at least two residues. All indices must refer to
+guanines in the sequence and must be unique across all four lists. Preserve
+the intended order of both the lists and their indices rather than sorting them.
+
+> **Figure placeholder:** G-column order and the mapping of residue indices
+> to tetrads.
+
+#### `polarity_pattern`
+
+A string of `a` and `s` characters defining the orientation of guanine bases
+in each tetrad, from bottom to top. There must be one character per tetrad,
+so the string's length must match the length of each list in `GT_resids`.
+
+> **Figure placeholder:** Guanine orientations corresponding to `a` and `s`
+> and their order in a tetrad stack.
+
+#### `helicity`
+
+Either `"RH"` or `"LH"`, selecting right-handed or left-handed twist between
+tetrads in the G4 structure.
+
+> **Figure placeholder:** Right-handed and left-handed tetrad stacks.
+
+#### `force_field`
+
+A GROMACS short force-field name or a positive integer menu number. Run
+`gmx pdb2gmx` to inspect the available force fields and their menu numbers.
+
+**Force-field menu numbers depend on the GROMACS installation.** The number `4`
+in the example is an example selection, not a universal force-field identifier.
+Choose the appropriate value for your installation. The lower-level API can
+display the available menu before selection.
+
+**Optional entries**
+
+#### `gromacs_executable`
+
+**Default:** `"gmx"`.
+
+GROMACS command or executable path.
+
+#### `dielectric_const`
+
+**Default:** `15`.
+
+Dielectric constant written to the simulation molecular dynamics parameter
+(MDP) file as `epsilon_r`. Must be positive and finite.
+
+#### `saving_stride`
+
+**Default:** `5000`.
+
+Number of MD steps between compressed trajectory frames and PLUMED output
+records. Must be a positive integer.
+
+#### `after_folding_steps`
+
+**Default:** `2500000`.
+
+Number of additional MD steps after the folding protocol. Tetrad restraints
+remain active during this period. Must be a nonnegative integer.
+
+#### `max_bulge_length`
+
+**Default:** `3`.
+
+Maximum number of intervening residues (bulge size) allowed between successive
+residues in a G-tract reference block. Larger gaps split the G-tract into
+separate reference blocks. Must be a nonnegative integer.
+
+#### `n_frames`
+
+**Default:** `5`.
+
+Number of structures to extract from the post-protocol trajectory. Frames
+are ranked by RMSD to the full-core reference: frame 1 has the lowest RMSD,
+frame 2 has the second-lowest RMSD, and so on. Must be a positive integer.
+
+#### `schedule` — restraint schedule
+
+**Default:** The schedule shown in the example below.
+
+An object defining restraint timings, targets and force constants. Omitted
+schedule fields use their defaults.
+
+Each stage row is `[step, target, kappa]`. Step values must be nonnegative
+integers and strictly increase within each stage list. Targets and force
+constants must be finite and nonnegative.
+
+- `gt_initial`: Initial G-tract restraint stages, with steps measured from
+  the simulation start.
+- `core_start`: Starting step for the first cumulative core restraint; must
+  follow the last `gt_initial` stage.
+- `core_spacing`: Positive integer interval, in MD steps, between the starts
+  of successive core restraints.
+- `core`: Stage offsets relative to each core restraint's start.
+- `tetrads`: Stage offsets relative to the tetrad restraint start; at least
+  two stages are required.
+
+Core restraint blocks overlap when their stages extend beyond the next block's
+starting step.
+
+For `n_core` cumulative core references, tetrad restraints start at:
+
+```text
+tetrad_start = core_start + n_core * core_spacing
+```
+
+G-tract restraints hold the final `gt_initial` force constant until
+`tetrad_start`, then reach zero at the second tetrad stage's offset.
+The protocol length is the largest step used by any restraint, and the total
+simulation length adds `after_folding_steps`.
+
+The generated protocol uses upper-wall `MOVINGRESTRAINT` restraints
+(`VERSE=U`); PLUMED interpolates targets and force constants between stage
+points. See the [PLUMED MOVINGRESTRAINT documentation](https://www.plumed.org/doc-v2.10/user-doc/html/_m_o_v_i_n_g_r_e_s_t_r_a_i_n_t.html).
+The writer does not change PLUMED's default units: RMSD targets are in nm,
+time output is in ps, and RMSD restraint force constants use kJ/mol/nm².
+PDB coordinates remain in Å. See [PLUMED units](https://www.plumed.org/doc-v2.10/user-doc/html/_u_n_i_t_s.html).
+
+> **Figure placeholder:** Restraint schedule showing G-tract, overlapping
+> core and tetrad stages, followed by the post-folding simulation period.
+
+#### Example input JSON
+
+This complete example uses the default optional settings and restraint schedule.
+It is also available as [examples/input.json](examples/input.json).
 
 ```json
 {
@@ -154,98 +298,24 @@ The following complete example uses the default optional settings and schedule:
 }
 ```
 
-#### Required entries
-
-| Entry | Meaning and accepted values |
-| --- | --- |
-| `sequence` | DNA sequence written 5′ to 3′, containing at least two bases from `A`, `T`, `G`, `C`. Lowercase and whitespace are normalized. |
-| `GT_resids` | Four named, ordered G-tracts, each containing an ordered list of 1-based residue indices. |
-| `polarity_pattern` | A string of `a` and `s` characters, one per tetrad/layer. Its length must match every G-tract's length. |
-| `helicity` | `"RH"` or `"LH"`. The corresponding stored template must be available for CLI preparation. |
-| `force_field` | A GROMACS short force-field name or a positive integer menu number. |
-
-Every G-tract must have at least two residues. All listed residues must exist in
-the sequence and be guanine, and indices must be unique across all tracts.
-Dictionary order and the order within each tract define correspondence to the
-reference template; preserve the intended order rather than sorting the indices.
-
-**Force-field menu numbers depend on the GROMACS installation.** The number `4`
-in the example is an example selection, not a universal force-field identifier.
-Choose the appropriate value for your installation. The lower-level API can
-display the available menu before selection.
-
-#### Optional entries
-
-| Entry | Default | Meaning |
-| --- | --- | --- |
-| `gromacs_executable` | `"gmx"` | GROMACS command or executable path. |
-| `dielectric_const` | `15` | Positive dielectric constant written to the simulation MDP's `epsilon_r`. |
-| `saving_stride` | `5000` | Positive number of MD steps between compressed trajectory frames and PLUMED output records. |
-| `after_folding_steps` | `2500000` | Nonnegative number of additional MD steps after the protocol's final step. |
-| `max_bulge_length` | `3` | Maximum number of intervening sequence residues retained within a reference block. Larger gaps split a G-tract into blocks. |
-| `n_frames` | `5` | Positive number of distinct low-RMSD times to select for extraction. |
-| `schedule` | Values shown above | Restraint timings, targets and force constants. Omitted schedule fields use defaults. |
-
-The CLI fixes the timestep at **0.002 ps**. `dt_ps` is configurable through the
-Python API but is rejected in CLI JSON, even if set to its default value.
-Execution settings and trajectory paths are supplied through commands or API
-method arguments; the JSON has no `preparation`, `run`, `extract` or `logging`
-blocks. There are no aliases for input names.
-
-#### Restraint schedule
-
-Each stage row is `[step, target, kappa]`. Step values must be nonnegative
-integers and strictly increase within each stage list. Targets and force
-constants must be finite and nonnegative.
-
-| Schedule field | Interpretation |
-| --- | --- |
-| `gt_initial` | Initial G-tract restraint stages, with steps measured from the simulation start. |
-| `core_start` | Starting step for the first cumulative core restraint; must follow the last GT-initial stage. |
-| `core_spacing` | Positive interval between the starts of successive core restraints. |
-| `core` | Stage offsets relative to each core restraint's start. |
-| `tetrads` | Stage offsets relative to the tetrad restraint start; at least two stages are required. |
-
-Core restraint blocks overlap when their stages extend beyond the next block's
-starting step.
-
-For `n_core` cumulative core references, tetrad restraints start at:
-
-```text
-tetrad_start = core_start + n_core * core_spacing
-```
-
-G-tract restraints hold the final `gt_initial` force constant until
-`tetrad_start`, then reach zero at the second tetrad stage's offset.
-`gt_hold_kappa` and `gt_release_offset` are derived properties, not input fields.
-The protocol length is the largest step used by any restraint, and the total
-simulation length adds `after_folding_steps`.
-
-The generated protocol uses upper-wall `MOVINGRESTRAINT` restraints
-(`VERSE=U`); PLUMED interpolates targets and force constants between stage
-points. See the [PLUMED MOVINGRESTRAINT documentation](https://www.plumed.org/doc-v2.10/user-doc/html/_m_o_v_i_n_g_r_e_s_t_r_a_i_n_t.html).
-The writer does not change PLUMED's default units: RMSD targets are in nm,
-time output is in ps, and RMSD restraint force constants use kJ/mol/nm².
-PDB coordinates remain in Å. See [PLUMED units](https://www.plumed.org/doc-v2.10/user-doc/html/_u_n_i_t_s.html).
-
-### Extract from explicit trajectory files
+### Extract from an explicit trajectory file
 
 Use these flags for a simulation run outside the client, or to override the
 recorded output paths:
 
 ```bash
-# One trajectory part in the run directory.
-g4-builder extract -w runs/example -trj smd.part0001.xtc
+# Use the trajectory in the run directory.
+g4-builder extract -w runs/example -trj smd.xtc
 
-# Several parts, supplied in chronological order.
+# Specify the structure and COLVAR as well.
 g4-builder extract -w runs/example \
-    -trj smd.part0001.xtc smd.part0002.xtc \
+    -trj smd.xtc \
     -s smd.tpr -colvar COLVAR
 ```
 
 | Flag | Input | Default when omitted |
 | --- | --- | --- |
-| `-trj`, `--trajectories` | One XTC path or an ordered list of paths | Trajectories recorded by `run_sim`; required explicitly if no outputs are recorded |
+| `-trj`, `--trajectories` | XTC trajectory path | Trajectory recorded by `run_sim`; required explicitly if no outputs are recorded |
 | `-s`, `--structure` | Matching structure or TPR file | Recorded structure, otherwise the prepared simulation TPR |
 | `-colvar`, `--colvar` | COLVAR file | Recorded COLVAR, otherwise the run directory's default COLVAR |
 
@@ -260,13 +330,11 @@ directory. For extraction inputs, in both the CLI and Python API:
 
 | Supplied path | Resolution |
 | --- | --- |
-| `smd.part0001.xtc` | A bare filename: relative to the run's working directory |
-| `results/smd.part0001.xtc` | A path containing directories: relative to the caller's current directory |
-| `/data/run/smd.part0001.xtc` | Absolute path: used directly |
+| `smd.xtc` | A bare filename: relative to the run's working directory |
+| `results/smd.xtc` | A path containing directories: relative to the caller's current directory |
+| `/data/run/smd.xtc` | Absolute path: used directly |
 
-User-home paths such as `~/results/part1.xtc` are expanded. These rules apply
-to trajectories, structures and COLVAR, independently for every list entry.
-Output frames are always written to the runner's working directory.
+Output frames are always written to the working directory.
 
 ### Reuse prepared runs
 
@@ -280,9 +348,10 @@ other configuration changes require a new directory or explicit `--overwrite`.
 `--overwrite` regenerates input files and run metadata but does not delete
 existing MD output files. Use a fresh directory for a different simulation.
 
-`run_sim` uses `-cpi` and `-noappend`. GROMACS uses an available checkpoint for
-continuation and writes numbered output parts; keep checkpoint files when
-continuing a simulation. See the [GROMACS mdrun documentation](https://manual.gromacs.org/current/onlinehelp/gmx-mdrun.html).
+`run_sim` uses `-cpi`. GROMACS uses an available checkpoint for continuation
+and appends to the existing output files by default. Keep the checkpoint and
+output files together when continuing a simulation. See the
+[GROMACS mdrun documentation](https://manual.gromacs.org/current/onlinehelp/gmx-mdrun.html).
 
 Use `g4-builder --help` or `g4-builder extract --help` for parser help. Exit
 codes are 0 for success, 1 for handled runtime errors, 2 for argument errors,
@@ -346,11 +415,9 @@ config = g4.SimulationConfig(
     helicity="RH",
     force_field=4,
     working_dir="runs/api_example",
-    dt_ps=0.002,
 )
 ```
 
-The API accepts the CLI settings plus `dt_ps`, a positive timestep in ps.
 Constructing a config validates its values; it does not create files or run
 GROMACS. Configs are immutable; use `dataclasses.replace()` to derive changes:
 
@@ -362,8 +429,8 @@ config = replace(config, schedule=g4.ScheduleConfig(core_spacing=3_000_000))
 
 Dictionary and JSON loaders accept a nested schedule dictionary. The direct
 constructor expects a `ScheduleConfig` object. `config.to_dict()` exports
-JSON-compatible settings without `working_dir`. The export includes the
-API-only `dt_ps` field; omit it if preparing a JSON file for the CLI.
+JSON-compatible settings without `working_dir`. Use the input JSON example
+above when preparing settings for the CLI.
 
 ### Run the pipeline
 
@@ -390,7 +457,7 @@ print(result.frame_paths)         # {1: Path(...), 2: Path(...), ...}
 | `prepare(overwrite=False)` | Build and save the strand, full/partial references and PLUMED protocol without calling GROMACS. Refuse to replace existing run inputs unless explicitly allowed. |
 | `minimize(pdb2gmx_timeout=60, discovery_timeout=2)` | Generate topology, detect and remap changed reference atom serials, regenerate the protocol, add a box, prepare and run energy minimization. |
 | `prepare_simulation()` | Create the simulation MDP and TPR using protocol length plus post-folding steps. |
-| `run(timeout=None)` | Run the PLUMED simulation and record the actual numbered XTC output paths. |
+| `run(timeout=None)` | Run the PLUMED simulation and record the XTC output path. |
 | `extract(trajectories=None, structure=None, colvar=None, n=None, timeout=None)` | Select and extract frames using recorded outputs or explicit file overrides. `n` overrides the configured `n_frames`. |
 
 Stages return the same `RunResult` object. It contains paths, protocol and
@@ -415,11 +482,11 @@ Paths within a run directory are relocated when the entire directory is moved;
 external absolute paths retain their original locations. API stages run when
 called; unlike CLI preparation, they do not automatically skip completed stages.
 
-For a simulation run separately, supply its trajectories explicitly:
+For a simulation run separately, supply its trajectory explicitly:
 
 ```python
 result = pipeline.extract(
-    trajectories=["smd.part0001.xtc", "smd.part0002.xtc"],
+    trajectories="smd.xtc",
     structure="smd.tpr",
     colvar="COLVAR",
     n=3,
@@ -487,7 +554,6 @@ preparation.prep_sim_file(
     n_steps=protocol.final_steps + 2_500_000,
     saving_stride=5000,
     dielectric_const=15,
-    dt_ps=0.002,
 )
 ```
 
@@ -500,7 +566,7 @@ stores and returns a menu-number-to-name dictionary.
 The wrappers use fixed command choices: TIP3P in `pdb2gmx`, a centered
 dodecahedron box with `editconf -d 1.4`, `grompp -maxwarn 1` for minimization,
 and `grompp -maxwarn 2` for the simulation. Simulation execution always uses
-`-cpi`, `-noappend`, `-v` and `-plumed`; frame extraction selects `System`.
+`-cpi`, `-v` and `-plumed`; frame extraction selects `System`.
 These are not configuration entries or method options. The packaged MDP files
 provide the remaining simulation settings.
 
@@ -517,10 +583,9 @@ best_frames = extractor.find_best_frames(
     protocol_steps=protocol.final_steps,
     colvar=paths.colvar,
     n=5,
-    dt_ps=preparation.dt_ps,
 )
 extractor.extract_frames(
-    trajectories=preparation.outputs.trajectories,
+    trajectories=paths.trajectory,
     structure=preparation.outputs.structure,
     timeout=None,
 )
@@ -531,9 +596,8 @@ print(extractor.saved_paths)
 
 `TrajectoryFrameExtractor` takes only a runner at construction. Selection reads
 COLVAR and does not require a trajectory, structure or GROMACS execution.
-`colvar=None` uses the default path. Extraction takes one trajectory path or an
-ordered iterable of parts and a matching structure/TPR path; several parts are
-joined with `trjcat` before `trjconv` is run for each selected time.
+`colvar=None` uses the default path. Extraction takes a trajectory path and a
+matching structure/TPR path, then runs `trjconv` for each selected time.
 
 `find_best_frames()` returns and stores `{time_ps: RMSD}` in `best_frames`.
 Every new selection clears the previous selection and saved paths, including
@@ -541,7 +605,7 @@ when selection fails. `extract_frames()` requires a successful selection,
 returns `None`, prints saved paths and records them in `saved_paths`.
 
 Manual component calls do not create pipeline `run.json` metadata. Retain the
-protocol's `final_steps`, `full_ref_label` and timestep if selecting frames
+protocol's `final_steps` and `full_ref_label` if selecting frames
 in a later session.
 
 ### Lower-level API: structures and references
@@ -634,14 +698,13 @@ COLVAR must have its column labels on the first line, for example:
 ```
 
 The first column is time in ps; the requested RMSD label identifies the
-selection column. Selection filters times at or after
-`protocol_steps * dt_ps`, ignores non-finite time/RMSD values, rounds times to
+selection column. Selection filters times at or after the end of the folding
+protocol, ignores non-finite time/RMSD values, rounds times to
 integer ps, and ranks records by increasing RMSD. Duplicate rounded times are
 removed, keeping the lowest RMSD. At least `n` distinct eligible times are
 required. Frame 1 corresponds to the lowest selected RMSD.
 
-Use the same timestep for simulation preparation and selection; the pipeline
-does this automatically. COLVAR and trajectories must cover the same run.
+COLVAR and the trajectory must cover the same run.
 `trjconv -dump` extracts the saved frame nearest each requested time; matching
 trajectory and COLVAR saving strides helps their samples correspond. Selection
 does not inspect XTC duration to detect mismatched COLVAR data.
@@ -660,21 +723,20 @@ artifacts are:
 | `conf_box.pdb` | Boxed structure |
 | `em.tpr`, `em.pdb` | Minimization input and minimized structure |
 | `smd.mdp`, `smd.tpr` | Simulation parameter file and run input |
-| `smd.part*.xtc` | Numbered simulation trajectory parts |
+| `smd.xtc` | Simulation trajectory |
 | `COLVAR` | PLUMED time series used for frame selection |
 | `frame_1.pdb`, … | Extracted frames ranked by RMSD |
-| `extraction_trajectory.xtc` | Joined trajectory when extracting from multiple parts |
 | `gromacs.log` | Application log when configured by the CLI or API |
 | `run.json` | Pipeline state for later stages and restoration |
 
 Only the two MD TPR names are defined for stage naming: `em_tpr` and `tpr`.
 Their stems determine `mdrun -deffnm`; related names are derived in code.
 For example, changing `tpr` to `fold.tpr` produces a `fold.mdp` input and
-`fold.part*.xtc` trajectories. The final structure is requested with the base
-name `smd.pdb`; GROMACS applies part numbering under `-noappend`.
+`fold.xtc` trajectory. With the default `smd.tpr`, the final structure is
+saved as `smd.pdb`.
 
-There is no prefix setting in the input config and no default plain `smd.xtc`
-path. Filename patterns use `{name}` for references and `{index}` for frames.
+There is no prefix setting in the input config. Filename patterns use `{name}`
+for references and `{index}` for frames.
 `RunPaths.to_dict()` returns absolute `Path` values and retains those patterns;
 it does not scan for existing files. Use `paths.reference("ref_1")` and
 `paths.frame(1)` for specific generated paths.
@@ -695,22 +757,22 @@ top-level experimental template directories does not update packaged copies.
    directory. With the default filenames:
 
    ```bash
-   gmx mdrun -deffnm smd -cpi -noappend -v -plumed plumed_protocol.dat -c smd.pdb
+   gmx mdrun -deffnm smd -cpi -v -plumed plumed_protocol.dat -c smd.pdb
    ```
 
    Use the site's job-submission system when required. The Python package
    is not needed remotely for this direct GROMACS command.
-4. Copy COLVAR and every required numbered XTC part back, preserving the TPR
+4. Copy `COLVAR` and `smd.xtc` back, preserving the TPR
    used for simulation. Analyze the results locally with explicit paths:
 
    ```bash
    g4-builder extract -w runs/example \
-       -trj smd.part0001.xtc smd.part0002.xtc \
+       -trj smd.xtc \
        -s smd.tpr -colvar COLVAR
    ```
 
-Running GROMACS directly does not update the pipeline's recorded output list,
-so explicit trajectory paths are required for this route. In a fresh Python
+Running GROMACS directly does not record the output trajectory in the pipeline,
+so an explicit trajectory path is required for this route. In a fresh Python
 session, restore the pipeline with `FoldingPipeline.from_directory()` and use
 `pipeline.extract(trajectories=...)`. Extraction still needs GROMACS locally,
 but does not need PLUMED support. If GROMACS is unavailable on the local machine,
@@ -746,7 +808,7 @@ Reference and extracted-frame save messages are printed directly.
 | Force-field menu number is unavailable | Choose a number from this installation's menu or use an available short name. |
 | Stored reference template is missing | Check helicity/pattern availability; use lower-level `build_template=True` when generating a template is intended. |
 | Extraction cannot find an input | Check the bare-filename versus directory-containing path rules, the run directory and supplied files. |
-| Too few eligible frames | Check the RMSD label, protocol duration, timestep and COLVAR coverage, or reduce `n_frames`/API `n`. |
+| Too few eligible frames | Check the RMSD label, protocol duration and COLVAR coverage, or reduce `n_frames`/API `n`. |
 | Existing preparation conflicts with new settings | Use the matching settings, a new run directory or explicit preparation `--overwrite`. |
 | Notebook reports a config type mismatch after source edits | Restart the kernel, rerun imports and recreate the config; module reloads can leave different class versions in memory. |
 

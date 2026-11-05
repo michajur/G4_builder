@@ -85,20 +85,19 @@ class RunPaths:
     def to_dict(self):
         """Return all paths as absolute pathlib.Path values, without scanning files.
 
-        Reference and frame paths retain their {name} and {index} placeholders;
-        trajectory_parts retains its glob pattern. Prefixes are not paths and
-        are omitted. Paths are included even if the output files do not exist.
+        Reference and frame paths retain their {name} and {index} placeholders.
+        Prefixes are not paths and are omitted. Paths are included even if the
+        output files do not exist.
         """
         names = (
             "working_dir", "strand", "full_ref", "plumed", "colvar", "topology",
             "posre", "conf", "box", "em_tpr", "em_structure", "mdp", "tpr",
-            "simulation_structure", "joined_trajectory", "log",
+            "simulation_structure", "trajectory", "joined_trajectory", "log",
             "manifest", "em_mdp_template", "simulation_mdp_template",
         )
         paths = {name: getattr(self, name) for name in names}
         paths["reference"] = self.path(self._names["reference"])
         paths["frame"] = self.path(self._names["frame"])
-        paths["trajectory_parts"] = self.path(self.trajectory_parts)
         return paths
 
     @property
@@ -132,7 +131,7 @@ class RunPaths:
     @property
     def simulation_structure(self): return self.tpr.with_suffix(".pdb") # not path
     @property
-    def trajectory_parts(self): return f"{self.simulation_prefix}.part*.xtc" # not path
+    def trajectory(self): return self.tpr.with_suffix(".xtc")
     @property
     def joined_trajectory(self): return self.path(self.filename("joined_trajectory"))
     @property

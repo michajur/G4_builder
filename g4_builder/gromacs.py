@@ -134,24 +134,11 @@ class GromacsPreparation:
     def run_sim(self, timeout=None):
         require_files(self.paths.tpr, self.paths.plumed)
         command = ["mdrun", "-deffnm", self.paths.simulation_prefix, "-cpi",
-                   "-noappend", "-v", "-plumed", self.paths.plumed,
+                   "-v", "-plumed", self.paths.plumed,
                    "-c", self.paths.simulation_structure]
         self.runner.run(command, timeout=timeout)
 
-        # Collect trjectories 
-        trajectories = list(self.paths.working_dir.glob(self.paths.trajectory_parts))
+        require_files(self.paths.trajectory, self.paths.colvar)
 
-        # Sort trjajectory parts 
-        def part_number(path):
-            match = re.search(r"\.part(\d+)\.", path.name)
-            return int(match[1]) if match else 0
-        trajectories.sort(key=part_number)
-
-        # Check if output was produced
-        if not trajectories:
-            raise FileNotFoundError(f"mdrun completed without any trajectory parts matching {self.paths.trajectory_parts}")
-        require_files(self.paths.colvar)
-
-        # Collect output paths 
         # The TPR is authoritative for atom ordering and works as trjconv -s.
-        self.outputs = SimulationOutputs(tuple(trajectories), self.paths.tpr, self.paths.colvar)
+        self.outputs = SimulationOutputs((self.paths.trajectory,), self.paths.tpr, self.paths.colvar)
