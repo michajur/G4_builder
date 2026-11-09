@@ -59,10 +59,11 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(configuration.saving_stride, 5000)
         self.assertEqual(configuration.gromacs_executable, "gmx")
         self.assertEqual(configuration.force_field, 4)
-        self.values["schedule"] = {"core_spacing": 3000000}
+        self.values["schedule"] = {"core_steps": 4500000}
         self.write_input()
         configuration = load_input(self.input, self.work)
         self.assertEqual(configuration.schedule.core_spacing, 3000000)
+        self.assertEqual(configuration.schedule.core_steps, 4500000)
         self.assertEqual(configuration.schedule.core_start, 1000000)
         example = Path(__file__).resolve().parents[1] / "examples" / "input.json"
         configuration = load_input(example, self.work)

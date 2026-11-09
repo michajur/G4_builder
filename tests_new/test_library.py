@@ -245,15 +245,48 @@ class LibraryTests(unittest.TestCase):
         self.assertIn("RMSD REFERENCE=ref_1.pdb TYPE=OPTIMAL LABEL=rm1", text)
         self.assertEqual(text.count("RMSD REFERENCE="), len(p.references.entries))
         self.assertEqual(text.count("MOVINGRESTRAINT ..."), 6)
-        self.assertIn("STEP0=1000000  AT0=0.5", text)
-        self.assertIn("STEP0=3000000  AT0=0.5", text)
-        self.assertIn("STEP0=9000000  AT0=0.1", text)
+        self.assertIn("STEP0=1000000  AT0=0.0  KAPPA0=0", text)
+        self.assertIn("STEP0=3000000  AT0=0.0  KAPPA0=0", text)
+        self.assertIn("STEP0=9000000  AT0=0.0", text)
         # Generation is pure; the schedule is independent of writing paths.
-        schedule = ScheduleConfig(core_spacing=3000000)
+        schedule = ScheduleConfig(core_steps=4500000)
         changed = build_protocol(p.references, p.strand.serial, schedule)
         self.assertEqual(changed.final_steps, 16000000)
-        with self.assertRaises(ValueError):
-            ScheduleConfig(core=((2, 0, 1), (1, 0, 0)))
+
+    def test_schedule_derives_stages_from_four_step_counts(self):
+        schedule = ScheduleConfig(gt_initial_steps=300000, core_start=750000,
+                                  core_steps=1500000, tetrads_steps=2000000)
+        self.assertEqual(schedule.gt_initial, ((0, 0.0, 0), (300000, 0.0, 12000)))
+        self.assertEqual(schedule.core, ((0, 0.0, 0), (500000, 0.0, 20000),
+                                         (1000000, 0.0, 20000), (1500000, 0.0, 0)))
+        self.assertEqual(schedule.core_spacing, 1000000)
+        # The ramp depends on core_steps even when tetrads_steps differs.
+        self.assertEqual(schedule.tetrads, ((0, 0.0, 0), (500000, 0.0, 20000),
+                                            (2000000, 0.0, 5000)))
+        saved = replace(config(self.root), schedule=schedule).to_dict()
+        self.assertEqual(saved["schedule"], dict(gt_initial_steps=300000, core_start=750000,
+                                                core_steps=1500000, tetrads_steps=2000000))
+        self.assertEqual(SimulationConfig.from_dict(saved, working_dir=self.root).schedule, schedule)
+
+    def test_schedule_rejects_invalid_step_counts_and_removed_inputs(self):
+        for name in ("gt_initial_steps", "core_start", "core_steps", "tetrads_steps"):
+            for value in (True, 0, -1, 1.5, "3000000"):
+                with self.subTest(name=name, value=value), self.assertRaises(ValueError):
+                    ScheduleConfig(**{name: value})
+        invalid = (dict(core_steps=3000001), dict(core_start=400000),
+                   dict(core_start=300000), dict(tetrads_steps=1000000),
+                   dict(tetrads_steps=999999))
+        for values in invalid:
+            with self.subTest(values=values), self.assertRaises(ValueError):
+                ScheduleConfig(**values)
+        for name in ("gt_initial", "core", "tetrads", "core_spacing"):
+            values = config(self.root).to_dict()
+            values["schedule"][name] = 123
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, "Invalid input configuration"):
+                SimulationConfig.from_dict(values, working_dir=self.root)
+        # Small valid durations still produce strictly increasing stages.
+        shortest = ScheduleConfig(gt_initial_steps=1, core_start=2, core_steps=3, tetrads_steps=2)
+        self.assertEqual([stage[0] for stage in shortest.core], [0, 1, 2, 3])
 
     def test_pipeline_stages_and_recorded_outputs(self):
         work = self.root / "run"
@@ -297,18 +330,19 @@ class LibraryTests(unittest.TestCase):
     def test_gt_hold_kappa_follows_last_initial_stage(self):
         p = FoldingPipeline(config(self.root / "run"))
         self.quiet_prepare(p)
-        for kappa in (9000, 0):
-            schedule = ScheduleConfig(gt_initial=((0, 0.3, 0), (400000, 0.0, kappa)))
-            self.assertEqual(schedule.gt_hold_kappa, kappa)
+        for steps in (300000, 500000):
+            schedule = ScheduleConfig(gt_initial_steps=steps)
+            self.assertEqual(schedule.gt_hold_kappa, 12000)
             protocol = build_protocol(p.references, p.strand.serial, schedule)
             gt_block = protocol.text.split("MOVINGRESTRAINT ...", 1)[1].split("... MOVINGRESTRAINT", 1)[0]
-            repeated = ",".join([str(kappa)] * len(p.references.ref_info["GT"]))
+            repeated = ",".join(["12000"] * len(p.references.ref_info["GT"]))
+            self.assertIn(f"STEP1={steps}  AT1=", gt_block)
             self.assertIn(f"KAPPA1={repeated}\n", gt_block)
             self.assertIn(f"KAPPA2={repeated}\n", gt_block)
             saved = replace(p.config, schedule=schedule).to_dict()
             self.assertNotIn("gt_hold_kappa", saved["schedule"])
             restored = SimulationConfig.from_dict(saved, working_dir=self.root)
-            self.assertEqual(restored.schedule.gt_hold_kappa, kappa)
+            self.assertEqual(restored.schedule.gt_hold_kappa, 12000)
 
     def test_missing_stage_files_and_explicit_extraction(self):
         p = FoldingPipeline(config(self.root / "run"), FakeRunner(self.root / "run"))
@@ -367,23 +401,22 @@ class LibraryTests(unittest.TestCase):
     def test_gt_release_matches_second_tetrad_stage(self):
         p = FoldingPipeline(config(self.root / "release"))
         self.quiet_prepare(p)
-        schedule = ScheduleConfig(tetrads=((0, 0.1, 0), (1700000, 0.0, 20000),
-                                           (4000000, 0.0, 5000)))
+        schedule = ScheduleConfig(core_steps=5100000, tetrads_steps=4000000)
         self.assertEqual(schedule.gt_release_offset, 1700000)
         text = build_protocol(p.references, p.strand.serial, schedule).text
         blocks = text.split("MOVINGRESTRAINT ...")[1:]
         start = schedule.core_start + len(p.references.ref_info["core"]) * schedule.core_spacing
         held = ",".join([str(schedule.gt_hold_kappa)] * len(p.references.ref_info["GT"]))
-        self.assertIn(f"STEP3={start}  AT3=", blocks[0])
-        self.assertIn(f"KAPPA3={held}\n", blocks[0])
-        self.assertIn(f"STEP4={start + 1700000}  AT4=", blocks[0])
-        self.assertIn("KAPPA4=" + ",".join(["0"] * len(p.references.ref_info["GT"])) + "\n", blocks[0])
+        self.assertIn(f"STEP2={start}  AT2=", blocks[0])
+        self.assertIn(f"KAPPA2={held}\n", blocks[0])
+        self.assertIn(f"STEP3={start + 1700000}  AT3=", blocks[0])
+        self.assertIn("KAPPA3=" + ",".join(["0"] * len(p.references.ref_info["GT"])) + "\n", blocks[0])
         self.assertIn(f"STEP1={start + 1700000}  AT1=", blocks[-1])
+        self.assertIn(f"STEP2={start + 4000000}  AT2=", blocks[-1])
+        self.assertEqual(len(blocks[0].split("  STEP")) - 1, 4)
         saved = replace(p.config, schedule=schedule).to_dict()
         self.assertNotIn("gt_release_offset", saved["schedule"])
         self.assertEqual(SimulationConfig.from_dict(saved, working_dir=self.root).schedule.gt_release_offset, 1700000)
-        with self.assertRaisesRegex(ValueError, "at least two stages"):
-            ScheduleConfig(tetrads=((0, 0.1, 0),))
 
     def test_unchanged_reference_serials_skip_remapping(self):
         work = self.root / "unchanged"

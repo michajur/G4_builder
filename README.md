@@ -154,7 +154,7 @@ tetrads in the G4 structure.
 
 #### `force_field`
 
-A GROMACS short force-field name or a positive integer menu number. Run
+A GROMACS short force-field name or a menu number. Run
 `gmx pdb2gmx` to inspect the available force fields and their menu numbers.
 
 **Force-field menu numbers depend on the GROMACS installation.** The number `4`
@@ -211,25 +211,44 @@ frame 2 has the second-lowest RMSD, and so on. Must be a positive integer.
 
 **Default:** The schedule shown in the example below.
 
-An object defining restraint timings, targets and force constants. Omitted
-schedule fields use their defaults.
+An object containing four configurable timings, all in MD steps. Omitted
+fields use their defaults:
 
-Each stage row is `[step, target, kappa]`. Step values must be nonnegative
-integers and strictly increase within each stage list. Targets and force
-constants must be finite and nonnegative.
+- `gt_initial_steps` (default `400000`): Duration of the initial G-tract
+  ramp from a force constant of 0 to 12000.
+- `core_start` (default `1000000`): Starting step for the first cumulative
+  core restraint. Must be greater than `gt_initial_steps`.
+- `core_steps` (default `3000000`): Total duration of each core restraint
+  block. Must be divisible by three so that the intermediate stages fall
+  on integer MD steps.
+- `tetrads_steps` (default `3000000`): Total duration of the tetrad restraint
+  block. Must be greater than `core_steps / 3`.
 
-- `gt_initial`: Initial G-tract restraint stages, with steps measured from
-  the simulation start.
-- `core_start`: Starting step for the first cumulative core restraint; must
-  follow the last `gt_initial` stage.
-- `core_spacing`: Positive integer interval, in MD steps, between the starts
-  of successive core restraints.
-- `core`: Stage offsets relative to each core restraint's start.
-- `tetrads`: Stage offsets relative to the tetrad restraint start; at least
-  two stages are required.
+All four values must be positive integers. Targets and force constants are
+fixed; the package generates the following `[step, target, kappa]` stages:
 
-Core restraint blocks overlap when their stages extend beyond the next block's
-starting step.
+```text
+gt_initial:
+  [0,                  0.0,     0]
+  [gt_initial_steps,   0.0, 12000]
+
+core:
+  [0,                  0.0,     0]
+  [core_steps / 3,     0.0, 20000]
+  [2 * core_steps / 3, 0.0, 20000]
+  [core_steps,         0.0,     0]
+
+tetrads:
+  [0,                  0.0,     0]
+  [core_steps / 3,     0.0, 20000]
+  [tetrads_steps,      0.0,  5000]
+```
+
+G-tract stage steps are measured from the simulation start. Core and tetrad
+stage steps are offsets from the corresponding restraint block's start.
+Successive core blocks start `core_spacing = 2 * core_steps / 3` steps apart,
+so they overlap for the final third of each block. Stage arrays and
+`core_spacing` are derived values, not input fields.
 
 For `n_core` cumulative core references, tetrad restraints start at:
 
@@ -237,8 +256,8 @@ For `n_core` cumulative core references, tetrad restraints start at:
 tetrad_start = core_start + n_core * core_spacing
 ```
 
-G-tract restraints hold the final `gt_initial` force constant until
-`tetrad_start`, then reach zero at the second tetrad stage's offset.
+G-tract restraints hold their force constant at 12000 until `tetrad_start`,
+then reach zero at `tetrad_start + core_steps / 3`, the second tetrad stage.
 The protocol length is the largest step used by any restraint, and the total
 simulation length adds `after_folding_steps`.
 
@@ -276,24 +295,10 @@ It is also available as [examples/input.json](examples/input.json).
   "max_bulge_length": 3,
   "n_frames": 5,
   "schedule": {
+    "gt_initial_steps": 400000,
     "core_start": 1000000,
-    "core_spacing": 2000000,
-    "gt_initial": [
-      [0, 0.3, 0],
-      [100000, 0.3, 500],
-      [400000, 0.0, 12000]
-    ],
-    "core": [
-      [0, 0.5, 0],
-      [1000000, 0.0, 20000],
-      [2000000, 0.0, 20000],
-      [3000000, 0.0, 0]
-    ],
-    "tetrads": [
-      [0, 0.1, 0],
-      [1000000, 0.0, 20000],
-      [3000000, 0.0, 5000]
-    ]
+    "core_steps": 3000000,
+    "tetrads_steps": 3000000
   }
 }
 ```
@@ -424,7 +429,7 @@ GROMACS. Configs are immutable; use `dataclasses.replace()` to derive changes:
 ```python
 from dataclasses import replace
 
-config = replace(config, schedule=g4.ScheduleConfig(core_spacing=3_000_000))
+config = replace(config, schedule=g4.ScheduleConfig(core_steps=4_500_000))
 ```
 
 Dictionary and JSON loaders accept a nested schedule dictionary. The direct

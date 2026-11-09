@@ -114,11 +114,21 @@ number. Optional fields use defaults:
 | `n_frames` | `5` |
 | `schedule` | `ScheduleConfig` defaults, as shown in the full example |
 
-Partial `schedule` objects use defaults for omitted settings. Stage rows contain
-`[step_offset, target, kappa]`. `gt_hold_kappa` and `gt_release_offset` are derived
-properties, not input fields: GT holding uses the last GT initial kappa and GT
-release ends at the second tetrad stage. The default model timestep is 0.002 ps;
-protocol steps are converted to COLVAR time using that timestep for extraction.
+Partial `schedule` objects use defaults for omitted settings. The only schedule
+inputs are `gt_initial_steps` (default 400000), `core_start` (1000000),
+`core_steps` (3000000) and `tetrads_steps` (3000000), all positive integers.
+`core_start` must exceed `gt_initial_steps`, `core_steps` must be divisible by
+three, and `tetrads_steps` must exceed `core_steps / 3`.
+
+Stage arrays, targets, force constants and `core_spacing` are derived rather
+than configurable. All RMSD targets are zero. The GT force constant ramps from
+0 to 12000 by `gt_initial_steps`. Each core block ramps to 20000 at one third
+of `core_steps`, holds until two thirds, then falls to zero at `core_steps`.
+Core blocks start two thirds of `core_steps` apart. The tetrad block ramps to
+20000 at `core_steps / 3`, then ends at `tetrads_steps` with a force constant
+of 5000. GT holding continues until the tetrad block starts and GT release
+ends at its second stage. The default model timestep is 0.002 ps; protocol
+steps are converted to COLVAR time using that timestep for extraction.
 
 The CLI fixes `dt_ps` at 0.002 ps and rejects that field in CLI JSON. It also
 uses no run/extraction timeout, a 60-second pdb2gmx timeout, a 2-second discovery

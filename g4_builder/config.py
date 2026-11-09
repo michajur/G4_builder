@@ -24,43 +24,44 @@ def positive(name, value):
 
 @dataclass(frozen=True)
 class ScheduleConfig:
-    """Schedule offsets are MD steps, independent of the timestep.
+    """Derive fixed restraint stages from four configurable MD step counts.
 
     GT hold/release stages follow the start of tetrad restraints.
     Core stages and tetrad stages use relative offsets.
-    These plain tuples can also be constructed from configuration-file lists.
     """
+    gt_initial_steps: int = 400_000
     core_start: int = 1_000_000
-    core_spacing: int = 2_000_000
-    gt_initial: tuple = ((0, 0.3, 0), (100000, 0.3, 500), (400000, 0.0, 12000))
-    core: tuple = ((0, 0.5, 0), (1000000, 0.0, 20000),
-                   (2000000, 0.0, 20000), (3000000, 0.0, 0))
-    tetrads: tuple = ((0, 0.1, 0), (1000000, 0.0, 20000), (3000000, 0.0, 5000))
+    core_steps: int = 3_000_000
+    tetrads_steps: int = 3_000_000
 
     def __post_init__(self):
-        integer("core_start", self.core_start)
-        integer("core_spacing", self.core_spacing, 1)
-        for name in ("gt_initial", "core", "tetrads"):
-            stages = tuple(tuple(stage) for stage in getattr(self, name))
-            if not stages:
-                raise ValueError(f"{name} schedule must not be empty")
-            previous = -1
-            for stage in stages:
-                if len(stage) != 3:
-                    raise ValueError("Schedule stages must contain (step, target, kappa)")
-                step, target, kappa = stage
-                integer("schedule step", step)
-                if step <= previous:
-                    raise ValueError("Schedule steps must be strictly increasing")
-                for value in (target, kappa):
-                    if isinstance(value, bool) or not isinstance(value, Real) or not math.isfinite(value) or value < 0:
-                        raise ValueError("Schedule target and kappa must be finite and nonnegative")
-                previous = step
-            object.__setattr__(self, name, stages)
-        if len(self.tetrads) < 2:
-            raise ValueError("The tetrads schedule must contain at least two stages for GT release")
-        if self.core_start <= self.gt_initial[-1][0]:
-            raise ValueError("GT hold and release must follow the initial GT stages")
+        for name in ("gt_initial_steps", "core_start", "core_steps", "tetrads_steps"):
+            object.__setattr__(self, name, integer(name, getattr(self, name), 1))
+        if self.core_steps % 3:
+            raise ValueError("core_steps must be divisible by 3 so restraint stages use integer MD steps")
+        if self.core_start <= self.gt_initial_steps:
+            raise ValueError("core_start must be greater than gt_initial_steps")
+        if self.tetrads_steps <= self.core_steps // 3:
+            raise ValueError("tetrads_steps must be greater than core_steps / 3")
+
+    @property
+    def gt_initial(self):
+        return ((0, 0.0, 0), (self.gt_initial_steps, 0.0, 12000))
+
+    @property
+    def core(self):
+        third = self.core_steps // 3
+        return ((0, 0.0, 0), (third, 0.0, 20000),
+                (2 * third, 0.0, 20000), (self.core_steps, 0.0, 0))
+
+    @property
+    def core_spacing(self):
+        return 2 * (self.core_steps // 3)
+
+    @property
+    def tetrads(self):
+        return ((0, 0.0, 0), (self.core_steps // 3, 0.0, 20000),
+                (self.tetrads_steps, 0.0, 10000))
 
     @property
     def gt_hold_kappa(self):
