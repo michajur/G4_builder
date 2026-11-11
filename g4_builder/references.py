@@ -1,6 +1,8 @@
 """Reference construction and explicit metadata for each restraint."""
+
 from dataclasses import dataclass, field
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -10,12 +12,16 @@ from .resources import data_path
 from .paths import default_filename
 from .template_builder import build_reference_template
 
-_G_BASE_ATOMS = ("N9", "C8", "N7", "C5", "C6", "O6", "N1", "C2", "N2", "N3", "C4")
+_G_BASE_ATOMS = (
+    "N9", "C8", "N7", "C5", "C6", "O6", "N1", "C2", "N2", "N3", "C4"
+)
 _XYZ = ["x", "y", "z"]
 
 
 @dataclass(frozen=True)
 class Reference:
+    """One restraint's selected atoms, residue membership and RMSD label."""
+
     name: str
     category: str
     resids: tuple
@@ -25,6 +31,7 @@ class Reference:
 
     @property
     def filename(self):
+        """Filename used by both PDB saving and PLUMED generation."""
         return default_filename("reference", name=self.name)
 
 
@@ -34,27 +41,39 @@ class ReferenceSet:
 
     full_ref: pd.DataFrame
     entries: tuple
-    saved_paths: dict = field(default_factory=dict, init=False, repr=False, compare=False)
+    saved_paths: dict = field(
+        default_factory=dict, init=False, repr=False, compare=False
+    )
 
     @property
     def partial_refs(self):
+        """Map partial-reference names to their atom DataFrames."""
         return {entry.name: entry.atoms for entry in self.entries}
 
     @property
     def ref_info(self):
-        return {group: [list(entry.resids) for entry in self.entries if entry.category == group]
-                for group in ("GT", "core", "tetrads")}
+        """Group ordered residue lists by the restraint type they describe."""
+        groups = {}
+        for group in ("GT", "core", "tetrads"):
+            groups[group] = []
+            for entry in self.entries:
+                if entry.category == group:
+                    groups[group].append(list(entry.resids))
+        return groups
 
     @property
     def full_ref_label(self):
-        return next(entry.label for entry in self.entries if entry.is_full_core)
+        """RMSD label of the last cumulative core reference."""
+        return next(
+            entry.label for entry in self.entries if entry.is_full_core
+        )
 
     def save_full_ref(self, path):
         """Save the full reference without TER or END records; return None."""
         save_pdb(self.full_ref, path, add_ter_end=False)
 
     def save_partial_refs(self, directory):
-        """Save partial references, print paths and store them in saved_paths."""
+        """Save partial references and print/store their paths."""
         root = Path(directory).expanduser().resolve()
         root.mkdir(parents=True, exist_ok=True)
         self.saved_paths = {}
@@ -65,18 +84,24 @@ class ReferenceSet:
             print(f"Saved {entry.name}: {path}")
 
     def _serial_updates(self, structure):
-        """Validate atom identities and obtain serials without mutating tables."""
+        """Validate atom identities and collect serials without mutation."""
         keys = ["res_seq", "atom_name"]
         mapping = structure.set_index(keys)["serial"]
         if mapping.index.has_duplicates:
-            raise ValueError("Processed structure has ambiguous residue/atom identifiers")
+            raise ValueError(
+                "Processed structure has ambiguous residue/atom identifiers"
+            )
         tables = [self.full_ref, *(entry.atoms for entry in self.entries)]
         updates = []
         for table in tables:
             try:
-                values = mapping.loc[pd.MultiIndex.from_frame(table[keys])].to_numpy()
+                values = mapping.loc[
+                    pd.MultiIndex.from_frame(table[keys])
+                ].to_numpy()
             except KeyError as exc:
-                raise ValueError("Processed structure is missing a reference base atom") from exc
+                raise ValueError(
+                    "Processed structure is missing a reference base atom"
+                ) from exc
             updates.append((table, values))
         return updates
 
@@ -88,8 +113,10 @@ class ReferenceSet:
         ambiguous atoms raise ValueError even when no remapping is needed.
         """
         updates = self._serial_updates(structure)
-        return any(not np.array_equal(table["serial"].to_numpy(), values)
-                   for table, values in updates)
+        return any(
+            not np.array_equal(table["serial"].to_numpy(), values)
+            for table, values in updates
+        )
 
     def remap_serials(self, structure):
         """Update reference serials by residue number and heavy-base atom name.
@@ -101,8 +128,10 @@ class ReferenceSet:
             table["serial"] = values
 
 
-def build_references(polarity_pattern, helicity, strand, GT_resids,
-                     max_bulge_length=3, template_dir=None, build_template=False):
+def build_references(
+    polarity_pattern, helicity, strand, GT_resids,
+    max_bulge_length=3, template_dir=None, build_template=False,
+):
     """Build a full reference and GT/core/tetrad partials as a ReferenceSet.
 
     G-tract dictionary order and residue order define template correspondence.
@@ -110,13 +139,17 @@ def build_references(polarity_pattern, helicity, strand, GT_resids,
     template_dir, or the packaged reference_templates directory. With
     build_template=True, generate it using build_reference_template() from the
     a.pdb/s.pdb files in that root's layers subdirectory instead. This option
-    belongs to this function only; configuration and pipeline defaults load files.
-    Atom names must match the template row for row before coordinates are copied.
-    Input tables and G-tracts are not modified, and no output files are written.
+    belongs to this function only; configuration and pipeline defaults load
+    files. Atom names must match the template row for row before coordinates
+    are copied. Input tables and G-tracts are unchanged; no files are written.
     Use the returned object's save_full_ref(), save_partial_refs(),
     needs_serial_remap() and remap_serials() methods for subsequent steps.
     """
-    if not isinstance(polarity_pattern, str) or not polarity_pattern or set(polarity_pattern) - set("as"):
+    if (
+        not isinstance(polarity_pattern, str)
+        or not polarity_pattern
+        or set(polarity_pattern) - set("as")
+    ):
         raise ValueError("polarity_pattern must contain 'a' and 's'")
     if helicity not in ("RH", "LH"):
         raise ValueError("helicity must be RH or LH")
@@ -125,20 +158,38 @@ def build_references(polarity_pattern, helicity, strand, GT_resids,
     max_bulge_length = integer("max_bulge_length", max_bulge_length)
     if not isinstance(strand, pd.DataFrame):
         raise TypeError("strand must be a DataFrame")
-    tracts = {name: tuple(integer("residue", n, 1) for n in values)
-              for name, values in GT_resids.items()}
-    if len(tracts) != 4 or any(len(v) != len(polarity_pattern) for v in tracts.values()):
-        raise ValueError("Four G-tracts, each matching polarity_pattern length, are required")
-    resids = [n for values in tracts.values() for n in values]
+    tracts = {}
+    for name, values in GT_resids.items():
+        tracts[name] = tuple(
+            integer("residue", number, 1) for number in values
+        )
+    if len(tracts) != 4 or any(
+        len(values) != len(polarity_pattern) for values in tracts.values()
+    ):
+        raise ValueError(
+            "Four G-tracts, each matching polarity_pattern length, "
+            "are required"
+        )
+    resids = []
+    for values in tracts.values():
+        resids.extend(values)
     if len(set(resids)) != len(resids):
         raise ValueError("G-tract residues must be unique")
-    root = Path(template_dir).expanduser().resolve() if template_dir else data_path("reference_templates")
-    if build_template:
-        template = build_reference_template(polarity_pattern, helicity, layer_dir=root / "layers")
+    if template_dir:
+        root = Path(template_dir).expanduser().resolve()
     else:
-        template = read_pdb(root / f"{helicity}_{len(polarity_pattern)}tet" / f"{polarity_pattern}.pdb")
+        root = data_path("reference_templates")
+    if build_template:
+        template = build_reference_template(
+            polarity_pattern, helicity, layer_dir=root / "layers"
+        )
+    else:
+        template = read_pdb(
+            root / f"{helicity}_{len(polarity_pattern)}tet"
+            / f"{polarity_pattern}.pdb"
+        )
 
-    # Assign template coordinates in G-tract order, then sort the full reference.
+    # Assign coordinates in G-tract order, then sort the full reference.
     fragments = []
     for values in tracts.values():
         for number in values:
@@ -146,14 +197,24 @@ def build_references(polarity_pattern, helicity, strand, GT_resids,
             if residue.empty or not residue.res_name.isin(["DG", "G"]).all():
                 raise ValueError(f"Residue {number} must exist and be guanine")
             atoms = residue.loc[residue.atom_name.isin(_G_BASE_ATOMS)]
-            if len(atoms) != len(_G_BASE_ATOMS) or set(atoms.atom_name) != set(_G_BASE_ATOMS):
-                raise ValueError(f"Residue {number} must contain each guanine base atom once")
+            if (
+                len(atoms) != len(_G_BASE_ATOMS)
+                or set(atoms.atom_name) != set(_G_BASE_ATOMS)
+            ):
+                raise ValueError(
+                    f"Residue {number} must contain each guanine "
+                    "base atom once"
+                )
             fragments.append(atoms)
     reference = pd.concat(fragments, ignore_index=True).copy()
     if len(reference) != len(template):
         raise ValueError("Reference and template atom counts differ")
-    if not np.array_equal(reference.atom_name.to_numpy(), template.atom_name.to_numpy()):
-        raise ValueError("Reference and template atom names do not match row for row")
+    if not np.array_equal(
+        reference.atom_name.to_numpy(), template.atom_name.to_numpy()
+    ):
+        raise ValueError(
+            "Reference and template atom names do not match row for row"
+        )
     coordinates = template[_XYZ].to_numpy(dtype=float)
     if not np.isfinite(coordinates).all():
         raise ValueError("Reference template coordinates must be finite")
@@ -161,7 +222,9 @@ def build_references(polarity_pattern, helicity, strand, GT_resids,
     reference["temp_factor"] = 1.0
     reference["chain_id"] = ""
     reference["element"] = ""
-    full_ref = reference.sort_values("res_seq", kind="stable").reset_index(drop=True)
+    full_ref = reference.sort_values(
+        "res_seq", kind="stable"
+    ).reset_index(drop=True)
 
     # Split G-tracts at long bulges and assemble the partial reference groups.
     blocks = []
@@ -176,7 +239,8 @@ def build_references(polarity_pattern, helicity, strand, GT_resids,
         blocks.append(block)
     blocks.sort(key=min)
     gt = [tuple(block) for block in blocks if len(block) > 1]
-    core, combined = [], list(blocks[0])
+    core = []
+    combined = list(blocks[0])
     for block in blocks[1:]:
         combined = combined + block
         core.append(tuple(combined))
@@ -185,8 +249,13 @@ def build_references(polarity_pattern, helicity, strand, GT_resids,
     for group, residues in (("GT", gt), ("core", core), ("tetrads", tetrads)):
         for position, resids in enumerate(residues):
             index = len(entries) + 1
-            atoms = full_ref.loc[full_ref.res_seq.isin(resids)].copy().reset_index(drop=True)
+            atoms = full_ref.loc[
+                full_ref.res_seq.isin(resids)
+            ].copy().reset_index(drop=True)
             # The last cumulative core contains every block by construction.
-            full = group == "core" and position == len(core) - 1
-            entries.append(Reference(f"ref_{index}", group, tuple(resids), f"rm{index}", atoms, full))
+            is_full_core = group == "core" and position == len(core) - 1
+            entries.append(Reference(
+                f"ref_{index}", group, tuple(resids), f"rm{index}",
+                atoms, is_full_core,
+            ))
     return ReferenceSet(full_ref, tuple(entries))

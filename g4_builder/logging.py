@@ -1,4 +1,5 @@
 """Opt-in logging configuration for the library's calling application."""
+
 import logging
 from pathlib import Path
 
@@ -13,6 +14,7 @@ def configure_logging(log_file=None, console=True, console_level=logging.INFO):
     configuration controls the library; importing it creates no files.
     """
     logger = logging.getLogger(LOGGER_NAME)
+    # Leave application-owned handlers alone when replacing our configuration.
     for handler in list(logger.handlers):
         if getattr(handler, "_g4_owned", False):
             logger.removeHandler(handler)
@@ -30,7 +32,9 @@ def configure_logging(log_file=None, console=True, console_level=logging.INFO):
         path.parent.mkdir(parents=True, exist_ok=True)
         handler = logging.FileHandler(path, encoding="utf-8")
         handler.setLevel(logging.DEBUG)
-        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+        )
         handlers.append(handler)
     for handler in handlers:
         handler._g4_owned = True

@@ -1,7 +1,10 @@
 """Select and extract low-RMSD post-protocol frames."""
+
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
+
 from .config import integer, positive
 from .paths import require_files
 
@@ -10,7 +13,8 @@ class TrajectoryFrameExtractor:
     """Select frames, then extract them using the shared runner and its paths.
 
     Only the runner is configured at construction. Pass COLVAR selection inputs
-    to find_best_frames(), then trajectory and structure inputs to extract_frames().
+    to find_best_frames(), then trajectory and structure inputs to
+    extract_frames().
     The selected times/RMSDs and saved paths remain available on the object.
 
     COLVAR times are ps. Multiple trajectory parts are joined with trjcat
@@ -22,6 +26,7 @@ class TrajectoryFrameExtractor:
     paths containing a directory resolve from the caller's current directory.
     Absolute paths and user-home expansion are supported for every input.
     """
+
     def __init__(self, runner):
         self.runner = runner
         self.paths = runner.paths
@@ -33,17 +38,20 @@ class TrajectoryFrameExtractor:
         return self.paths.working_dir
 
     def _resolve_path(self, path):
+        """Interpret only bare filenames relative to the run directory."""
         path = Path(path).expanduser()
         if not path.is_absolute() and path.parent == Path("."):
             path = self.working_dir / path
         return path.resolve()
 
-    def find_best_frames(self, rmsd_label, protocol_steps, colvar=None, n=5, dt_ps=0.002):
+    def find_best_frames(
+        self, rmsd_label, protocol_steps, colvar=None, n=5, dt_ps=0.002
+    ):
         """Read COLVAR and return/store the n lowest-RMSD post-protocol times.
 
         No trajectories, structure file or GROMACS executable are needed here.
-        colvar defaults to paths.colvar. Each call clears previous selection and
-        saved-path results, including when validation or selection fails.
+        colvar defaults to paths.colvar. Each call clears previous selection
+        and saved-path results, including when validation or selection fails.
         """
         self.best_frames = {}
         self.saved_paths = {}
@@ -51,23 +59,56 @@ class TrajectoryFrameExtractor:
         dt_ps = positive("dt_ps", dt_ps)
         n = integer("n", n, 1)
         protocol_end_ps = protocol_steps * dt_ps
-        colvar = self.paths.colvar if colvar is None else self._resolve_path(colvar)
+        if colvar is None:
+            colvar = self.paths.colvar
+        else:
+            colvar = self._resolve_path(colvar)
         with colvar.open() as handle:
             header = handle.readline().strip()
         labels = header.removeprefix("#! FIELDS").lstrip("# ").split()
-        if len(labels) < 2 or len(labels) != len(set(labels)) or rmsd_label not in labels[1:]:
-            raise ValueError(f"COLVAR header must contain unique fields including {rmsd_label!r}")
-        frame = pd.read_csv(colvar, sep=r"\s+", skiprows=1, comment="#", names=labels)
-        times = pd.to_numeric(frame.iloc[:, 0], errors="raise").to_numpy(dtype=float)
-        rmsds = pd.to_numeric(frame[rmsd_label], errors="raise").to_numpy(dtype=float)
-        mask = np.isfinite(times) & np.isfinite(rmsds) & (times >= protocol_end_ps)
-        candidates = pd.DataFrame({"time": [int(round(t)) for t in times[mask]], "rmsd": rmsds[mask]})
+        if (
+            len(labels) < 2
+            or len(labels) != len(set(labels))
+            or rmsd_label not in labels[1:]
+        ):
+            raise ValueError(
+                "COLVAR header must contain unique fields including "
+                f"{rmsd_label!r}"
+            )
+        frame = pd.read_csv(
+            colvar, sep=r"\s+", skiprows=1, comment="#", names=labels
+        )
+        times = pd.to_numeric(
+            frame.iloc[:, 0], errors="raise"
+        ).to_numpy(dtype=float)
+        rmsds = pd.to_numeric(
+            frame[rmsd_label], errors="raise"
+        ).to_numpy(dtype=float)
+
+        # Filter before rounding, then check the boundary again: rounding must
+        # not move an otherwise eligible sample back into the folding protocol.
+        mask = (
+            np.isfinite(times)
+            & np.isfinite(rmsds)
+            & (times >= protocol_end_ps)
+        )
+        candidates = pd.DataFrame({
+            "time": [int(round(time)) for time in times[mask]],
+            "rmsd": rmsds[mask],
+        })
         candidates = candidates.loc[candidates.time >= protocol_end_ps]
-        candidates = candidates.sort_values("rmsd", kind="stable").drop_duplicates("time")
+        # Sort first to keep the lowest RMSD at each rounded time.
+        candidates = candidates.sort_values("rmsd", kind="stable")
+        candidates = candidates.drop_duplicates("time")
         if len(candidates) < n:
-            raise ValueError(f"Requested {n} frames; only {len(candidates)} distinct post-protocol times remain")
-        self.best_frames = {int(row.time): float(row.rmsd)
-                            for row in candidates.head(n).itertuples(index=False)}
+            raise ValueError(
+                f"Requested {n} frames; only {len(candidates)} distinct "
+                "post-protocol times remain"
+            )
+        self.best_frames = {
+            int(row.time): float(row.rmsd)
+            for row in candidates.head(n).itertuples(index=False)
+        }
         return self.best_frames
 
     def extract_frames(self, trajectories, structure, timeout=None):
@@ -91,13 +132,22 @@ class TrajectoryFrameExtractor:
         if len(trajectories) > 1:
             trajectory = self.paths.joined_trajectory
             if trajectory in trajectories:
-                raise ValueError("The joined trajectory output must not replace an input")
-            self.runner.run(["trjcat", "-f", *trajectories, "-o", trajectory], timeout=timeout)
+                raise ValueError(
+                    "The joined trajectory output must not replace an input"
+                )
+            self.runner.run(
+                ["trjcat", "-f", *trajectories, "-o", trajectory],
+                timeout=timeout,
+            )
             require_files(trajectory)
         for index, time in enumerate(self.best_frames, 1):
             path = self.paths.frame(index)
-            self.runner.run(["trjconv", "-f", trajectory, "-s", structure,
-                             "-dump", time, "-o", path], input_text="System\n", timeout=timeout)
+            self.runner.run(
+                ["trjconv", "-f", trajectory, "-s", structure,
+                 "-dump", time, "-o", path],
+                input_text="System\n",
+                timeout=timeout,
+            )
             require_files(path)
             self.saved_paths[index] = path
             print(f"Saved frame_{index}: {path}")
