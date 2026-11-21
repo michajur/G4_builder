@@ -1,4 +1,6 @@
-"""Geometry, template-source selection and reference integration."""
+"""Generated template geometry, custom layers and reference integration."""
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 import json
 import shutil
@@ -9,7 +11,11 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 
-from g4_builder import DNAStrandBuilder, build_reference_template, build_references
+from g4_builder import (
+    DNAStrandBuilder, FoldingPipeline, build_reference_template, build_references,
+    configure_logging,
+)
+from g4_builder.cli import main
 from g4_builder.pdb_io import read_pdb
 from g4_builder.resources import data_path
 from tests_new.test_library import config
@@ -20,6 +26,7 @@ class ReferenceTemplateTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+        self.addCleanup(lambda: configure_logging(console=False))
 
     def test_geometry_and_residue_order_with_distinct_pair_properties(self):
         layers = data_path("reference_templates", "layers")
@@ -62,17 +69,19 @@ class ReferenceTemplateTests(unittest.TestCase):
         for base in "as":
             self.assertEqual((layers / f"{base}.pdb").read_bytes(), original_bytes[base])
 
-    def test_loading_remains_default_and_building_supports_missing_stored_template(self):
+    def test_references_always_generate_templates_from_flat_layers(self):
         c = config(self.root)
         strand = DNAStrandBuilder().build(c.sequence)
         original = strand.copy(deep=True)
         with patch("g4_builder.references.build_reference_template",
-                   side_effect=AssertionError("Loading must not invoke the builder")):
-            loaded = build_references(c.polarity_pattern, c.helicity, strand, c.GT_resids)
-        with self.assertRaises(FileNotFoundError):
-            build_references(c.polarity_pattern, "LH", strand, c.GT_resids)
-
-        built = build_references(c.polarity_pattern, "LH", strand, c.GT_resids, build_template=True)
+                   wraps=build_reference_template) as builder, patch(
+                       "g4_builder.template_builder.read_pdb", wraps=read_pdb
+                   ) as reader:
+            built = build_references(c.polarity_pattern, "LH", strand, c.GT_resids)
+        builder.assert_called_once_with(c.polarity_pattern, "LH", layer_dir=None)
+        layers = data_path("reference_templates", "layers")
+        self.assertEqual([call.args[0] for call in reader.call_args_list],
+                         [layers / "a.pdb", layers / "s.pdb"])
         template = build_reference_template(c.polarity_pattern, "LH")
         for tract_index, resids in enumerate(c.GT_resids.values()):
             for layer_index, resid in enumerate(resids):
@@ -81,14 +90,14 @@ class ReferenceTemplateTests(unittest.TestCase):
                 actual = built.full_ref.loc[built.full_ref.res_seq.eq(resid)]
                 self.assertEqual(actual.atom_name.tolist(), expected.atom_name.tolist())
                 np.testing.assert_allclose(actual[["x", "y", "z"]], expected[["x", "y", "z"]])
-        self.assertEqual(built.ref_info, loaded.ref_info)
-        self.assertEqual(built.full_ref_label, loaded.full_ref_label)
+        self.assertEqual(set(built.ref_info), {"GT", "core", "tetrads"})
+        self.assertEqual(built.full_ref_label, "rm8")
         self.assertTrue(built.full_ref.temp_factor.eq(1.0).all())
         self.assertTrue(built.full_ref.chain_id.eq("").all())
         self.assertTrue(built.full_ref.element.eq("").all())
         pd.testing.assert_frame_equal(strand, original)
 
-    def test_custom_template_root_uses_its_layers_without_stored_template(self):
+    def test_custom_layer_directory_controls_reference_coordinates(self):
         layers = self.root / "layers"
         shutil.copytree(data_path("reference_templates", "layers"), layers)
         # Distinguish this custom source from the packaged layer coordinates.
@@ -102,14 +111,41 @@ class ReferenceTemplateTests(unittest.TestCase):
                          - read_pdb(path).y.iloc[0] * np.sin(np.deg2rad(25)))
         c = config(self.root)
         strand = DNAStrandBuilder().build(c.sequence)
-        with self.assertRaises(FileNotFoundError):
-            build_references("saa", "RH", strand, c.GT_resids, template_dir=self.root)
         refs = build_references("saa", "RH", strand, c.GT_resids,
-                                template_dir=self.root, build_template=True)
+                                layer_dir=layers)
         actual = refs.full_ref.loc[refs.full_ref.res_seq.eq(c.GT_resids["GT_1"][1])]
         np.testing.assert_allclose(actual[["x", "y", "z"]],
                                    expected.loc[expected.res_seq.eq(2), ["x", "y", "z"]])
-        self.assertFalse((self.root / "RH_3tet").exists())
+
+    def test_pipeline_and_cli_generate_four_tetrad_lh_references(self):
+        tracts = {
+            f"GT_{index + 1}": list(range(4 * index + 1, 4 * index + 5))
+            for index in range(4)
+        }
+        settings = config(
+            self.root / "api", sequence="G" * 16,
+            GT_resids=tracts, polarity_pattern="sass", helicity="LH",
+        )
+        pipeline = FoldingPipeline(settings)
+        with redirect_stdout(StringIO()):
+            pipeline.prepare()
+        self.assertEqual(len(pipeline.references.full_ref), 16 * 11)
+        self.assertEqual(len(pipeline.references.ref_info["tetrads"]), 4)
+
+        values = settings.to_dict()
+        del values["dt_ps"]
+        input_path = self.root / "input.json"
+        input_path.write_text(json.dumps(values))
+        work = self.root / "cli"
+        with redirect_stdout(StringIO()):
+            status = main([
+                "prepare_nogmx", "-i", str(input_path), "-w", str(work),
+            ])
+        self.assertEqual(status, 0)
+        restored = FoldingPipeline.from_directory(work)
+        pd.testing.assert_frame_equal(
+            restored.references.full_ref, read_pdb(pipeline.paths.full_ref)
+        )
 
 
 if __name__ == "__main__":

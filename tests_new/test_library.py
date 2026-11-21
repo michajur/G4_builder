@@ -1,5 +1,5 @@
 """Tests for the new package; legacy modules and notebooks are not imported."""
-from contextlib import redirect_stdout
+from contextlib import redirect_stdout, redirect_stderr
 from dataclasses import replace
 from io import StringIO
 import json
@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 
 from g4_builder import (SimulationConfig, ScheduleConfig, FoldingPipeline,
-    DNAStrandBuilder, build_references, ReferenceSet, build_protocol, read_pdb, save_pdb,
+    DNAStrandBuilder, build_reference_template, build_references, ReferenceSet, build_protocol, read_pdb, save_pdb,
     GromacsRunner, GromacsPreparation, TrajectoryFrameExtractor, configure_logging)
 
 
@@ -143,7 +143,10 @@ class LibraryTests(unittest.TestCase):
         for entry in references.entries:
             references_path = references.saved_paths[entry.name]
             self.assertEqual(references_path, references_dir / entry.filename)
-            pd.testing.assert_frame_equal(read_pdb(references_path), entry.atoms)
+            # Generated coordinates retain full precision until PDB export.
+            expected = entry.atoms.copy()
+            expected[["x", "y", "z"]] = expected[["x", "y", "z"]].round(3)
+            pd.testing.assert_frame_equal(read_pdb(references_path), expected)
             self.assertIn(str(references_path), output.getvalue())
         for path in [full_path, *references.saved_paths.values()]:
             text = path.read_text()
@@ -153,7 +156,9 @@ class LibraryTests(unittest.TestCase):
             self.assertTrue(atoms.temp_factor.eq(1.0).all())
             self.assertTrue(atoms.chain_id.eq("").all())
             self.assertTrue(atoms.element.eq("").all())
-        pd.testing.assert_frame_equal(read_pdb(full_path), references.full_ref)
+        expected = references.full_ref.copy()
+        expected[["x", "y", "z"]] = expected[["x", "y", "z"]].round(3)
+        pd.testing.assert_frame_equal(read_pdb(full_path), expected)
 
     def test_validation_precedes_output_and_copies_inputs(self):
         destination = self.root / "not_created"
@@ -201,16 +206,15 @@ class LibraryTests(unittest.TestCase):
             p.run()
 
     def test_reference_identity_and_build_input_immutability(self):
-        from g4_builder.resources import data_path
         # With two tetrads and no bulges, GT + core + tetrads yields nine refs.
         c = config(self.root, sequence="G" * 8, polarity_pattern="ss",
                    GT_resids={"a": [1, 2], "b": [3, 4], "c": [5, 6], "d": [7, 8]})
         strand = DNAStrandBuilder().build(c.sequence)
         original_strand = strand.copy(deep=True)
-        template = read_pdb(data_path("reference_templates", "RH_2tet", "ss.pdb"))
+        template = build_reference_template("ss", "RH")
         original_template = template.copy(deep=True)
         tracts = {name: list(values) for name, values in c.GT_resids.items()}
-        with patch("g4_builder.references.read_pdb", return_value=template):
+        with patch("g4_builder.references.build_reference_template", return_value=template):
             references = build_references("ss", "RH", strand, tracts)
         self.assertEqual(references.full_ref_label, "rm7")
         self.assertEqual(sum(e.is_full_core for e in references.entries), 1)
@@ -226,15 +230,14 @@ class LibraryTests(unittest.TestCase):
         references.entries = (duplicate,) + references.entries
         self.assertEqual(references.full_ref_label, "rm7")
 
-    def test_missing_template_and_atom_mismatch(self):
-        from g4_builder.resources import data_path
+    def test_missing_layers_and_atom_mismatch(self):
         c = config(self.root)
         strand = DNAStrandBuilder().build(c.sequence)
         with self.assertRaises(FileNotFoundError):
-            build_references("saa", "RH", strand, c.GT_resids, template_dir=self.root)
-        template = read_pdb(data_path("reference_templates", "RH_3tet", "saa.pdb"))
+            build_references("saa", "RH", strand, c.GT_resids, layer_dir=self.root)
+        template = build_reference_template("saa", "RH")
         template.loc[0, "atom_name"] = "WRONG"
-        with patch("g4_builder.references.read_pdb", return_value=template):
+        with patch("g4_builder.references.build_reference_template", return_value=template):
             with self.assertRaisesRegex(ValueError, "atom names"):
                 build_references("saa", "RH", strand, c.GT_resids)
 
@@ -262,7 +265,7 @@ class LibraryTests(unittest.TestCase):
         self.assertEqual(schedule.core_spacing, 1000000)
         # The ramp depends on core_steps even when tetrads_steps differs.
         self.assertEqual(schedule.tetrads, ((0, 0.0, 0), (500000, 0.0, 20000),
-                                            (2000000, 0.0, 5000)))
+                                            (2000000, 0.0, 10000)))
         saved = replace(config(self.root), schedule=schedule).to_dict()
         self.assertEqual(saved["schedule"], dict(gt_initial_steps=300000, core_start=750000,
                                                 core_steps=1500000, tetrads_steps=2000000))
@@ -689,6 +692,51 @@ class RunnerTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+        self.addCleanup(lambda: configure_logging(console=False))
+
+    def test_output_is_unprefixed_in_file_and_debug_console(self):
+        log_file = self.root / "raw.log"
+        console = StringIO()
+        with redirect_stderr(console):
+            logger = configure_logging(
+                log_file, console_level=logging.DEBUG
+            )
+            runner = GromacsRunner(self.root, sys.executable, logger)
+            for channel in ("stdout", "stderr"):
+                output = f"  {channel} heading  \n\n\trow  \nlast"
+                runner.run([
+                    "-c",
+                    f"import sys; sys.{channel}.write({output!r})",
+                ])
+                # Metadata must start on a new line even if output did not.
+                for text in (log_file.read_text(), console.getvalue()):
+                    self.assertIn("GROMACS stdout/stderr:\n" + output + "\n", text)
+                    self.assertNotIn(f"DEBUG {channel}:", text)
+                    self.assertNotIn(f"DEBUG: {channel}:", text)
+            logger.info("normal status")
+        self.assertIn("INFO normal status\n", log_file.read_text())
+        self.assertIn("INFO: normal status\n", console.getvalue())
+
+    def test_probe_and_failure_output_preserve_whitespace(self):
+        log_file = self.root / "probe.log"
+        logger = configure_logging(log_file, console=False)
+        runner = GromacsRunner(self.root, sys.executable, logger)
+        stdout = "  Select the Force Field:  \n\n"
+        stderr = "\t1: Amber  \n"
+        completed = subprocess.CompletedProcess([], 0, stdout, stderr)
+        with patch("g4_builder.runner.subprocess.run", return_value=completed):
+            output = runner.probe(["pdb2gmx"])
+        self.assertEqual(output, stdout + "\n" + stderr)
+        self.assertIn("Force-field probe:\n" + output, log_file.read_text())
+
+        error_output = "  Fatal error:  \n\n\tdetails  \n"
+        with self.assertRaises(subprocess.CalledProcessError) as caught:
+            runner.run([
+                "-c",
+                f"import sys; sys.stderr.write({error_output!r}); sys.exit(7)",
+            ])
+        self.assertEqual(caught.exception.stderr, error_output)
+        self.assertIn("stderr:\n" + error_output, log_file.read_text())
 
     def test_streams_failure_and_timeout(self):
         log_file = self.root / "commands.log"

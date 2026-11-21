@@ -6,11 +6,32 @@ from pathlib import Path
 LOGGER_NAME = "g4_builder"
 
 
+class _OutputFormatter(logging.Formatter):
+    """Keep subprocess text intact and format only application messages."""
+
+    def __init__(self, fmt):
+        super().__init__(fmt)
+        self._at_line_start = True
+
+    def format(self, record):
+        if getattr(record, "gromacs_output", False):
+            text = record.getMessage()
+        else:
+            text = super().format(record) + "\n"
+            # Separate status messages from output without a final newline.
+            if not self._at_line_start:
+                text = "\n" + text
+        if text:
+            self._at_line_start = text.endswith(("\n", "\r"))
+        return text
+
+
 def configure_logging(log_file=None, console=True, console_level=logging.INFO):
     """Configure package-owned handlers; repeated calls replace them safely.
 
-    All command output is DEBUG in the file. The console displays brief INFO
-    status and errors. With no call to this function, normal Python logging
+    Command output is unprefixed DEBUG text in the file, under a block header.
+    The console displays brief INFO status and errors. Without this function,
+    normal Python logging
     configuration controls the library; importing it creates no files.
     """
     logger = logging.getLogger(LOGGER_NAME)
@@ -25,7 +46,7 @@ def configure_logging(log_file=None, console=True, console_level=logging.INFO):
     if console:
         handler = logging.StreamHandler()
         handler.setLevel(console_level)
-        handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+        handler.setFormatter(_OutputFormatter("%(levelname)s: %(message)s"))
         handlers.append(handler)
     if log_file is not None:
         path = Path(log_file).expanduser().resolve()
@@ -33,10 +54,12 @@ def configure_logging(log_file=None, console=True, console_level=logging.INFO):
         handler = logging.FileHandler(path, encoding="utf-8")
         handler.setLevel(logging.DEBUG)
         handler.setFormatter(
-            logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+            _OutputFormatter("%(asctime)s %(levelname)s %(message)s")
         )
         handlers.append(handler)
     for handler in handlers:
+        # The formatter supplies newlines for messages; raw output has its own.
+        handler.terminator = ""
         handler._g4_owned = True
         logger.addHandler(handler)
     return logger

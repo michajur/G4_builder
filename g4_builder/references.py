@@ -7,8 +7,7 @@ import numpy as np
 import pandas as pd
 
 from .config import integer
-from .pdb_io import read_pdb, save_pdb
-from .resources import data_path
+from .pdb_io import save_pdb
 from .paths import default_filename
 from .template_builder import build_reference_template
 
@@ -130,18 +129,16 @@ class ReferenceSet:
 
 def build_references(
     polarity_pattern, helicity, strand, GT_resids,
-    max_bulge_length=3, template_dir=None, build_template=False,
+    max_bulge_length=3, layer_dir=None,
 ):
     """Build a full reference and GT/core/tetrad partials as a ReferenceSet.
 
     G-tract dictionary order and residue order define template correspondence.
-    By default read <helicity>_<tetrad count>tet/<polarity_pattern>.pdb inside
-    template_dir, or the packaged reference_templates directory. With
-    build_template=True, generate it using build_reference_template() from the
-    a.pdb/s.pdb files in that root's layers subdirectory instead. This option
-    belongs to this function only; configuration and pipeline defaults load
-    files. Atom names must match the template row for row before coordinates
-    are copied. Input tables and G-tracts are unchanged; no files are written.
+    Generate the template using build_reference_template() from the packaged
+    flat a.pdb/s.pdb layers, or from layer_dir when supplied. Rise and twist
+    values come from data/stack_properties.json. Atom names must match the
+    template row for row before coordinates are copied. Input tables and
+    G-tracts are unchanged; no files are written.
     Use the returned object's save_full_ref(), save_partial_refs(),
     needs_serial_remap() and remap_serials() methods for subsequent steps.
     """
@@ -153,8 +150,6 @@ def build_references(
         raise ValueError("polarity_pattern must contain 'a' and 's'")
     if helicity not in ("RH", "LH"):
         raise ValueError("helicity must be RH or LH")
-    if not isinstance(build_template, bool):
-        raise ValueError("build_template must be a boolean")
     max_bulge_length = integer("max_bulge_length", max_bulge_length)
     if not isinstance(strand, pd.DataFrame):
         raise TypeError("strand must be a DataFrame")
@@ -175,19 +170,9 @@ def build_references(
         resids.extend(values)
     if len(set(resids)) != len(resids):
         raise ValueError("G-tract residues must be unique")
-    if template_dir:
-        root = Path(template_dir).expanduser().resolve()
-    else:
-        root = data_path("reference_templates")
-    if build_template:
-        template = build_reference_template(
-            polarity_pattern, helicity, layer_dir=root / "layers"
-        )
-    else:
-        template = read_pdb(
-            root / f"{helicity}_{len(polarity_pattern)}tet"
-            / f"{polarity_pattern}.pdb"
-        )
+    template = build_reference_template(
+        polarity_pattern, helicity, layer_dir=layer_dir
+    )
 
     # Assign coordinates in G-tract order, then sort the full reference.
     fragments = []

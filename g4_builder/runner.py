@@ -50,6 +50,7 @@ class GromacsRunner:
         self.logger.debug("Running in %s: %s", self.working_dir, command)
         stdout = deque(maxlen=100)
         stderr = deque(maxlen=100)
+        self.logger.debug("GROMACS stdout/stderr:")
         try:
             with subprocess.Popen(
                 command,
@@ -64,7 +65,13 @@ class GromacsRunner:
                 def consume(stream, name, tail):
                     for line in stream:
                         tail.append(line)
-                        self.logger.debug("%s: %s", name, line.rstrip())
+                        self.logger.debug(
+                            "%s", line,
+                            extra={
+                                "gromacs_output": True,
+                                "gromacs_stream": name,
+                            },
+                        )
 
                 # Drain both pipes concurrently so neither can block the child.
                 threads = []
@@ -103,8 +110,10 @@ class GromacsRunner:
             self.logger.error("%s failed: %s", arguments[0], exc)
             for channel, tail in (("stdout", stdout), ("stderr", stderr)):
                 if tail:
+                    self.logger.error("%s:", channel)
                     self.logger.error(
-                        "%s:\n%s", channel, "".join(tail).rstrip()
+                        "%s", "".join(tail),
+                        extra={"gromacs_output": True},
                     )
             raise
         self.logger.info("%s completed successfully", arguments[0])
@@ -136,8 +145,10 @@ class GromacsRunner:
             return value or ""
 
         output = decode(stdout) + "\n" + decode(stderr)
-        self.logger.debug("Force-field probe:\n%s", output)
+        self.logger.debug("Force-field probe:")
+        self.logger.debug("%s", output, extra={"gromacs_output": True})
         if code:
-            self.logger.error("Force-field discovery failed:\n%s", output)
+            self.logger.error("Force-field discovery failed:")
+            self.logger.error("%s", output, extra={"gromacs_output": True})
             raise subprocess.CalledProcessError(code, command, stdout, stderr)
         return output
