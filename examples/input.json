@@ -12,7 +12,7 @@
   "gromacs_executable": "gmx",
   "dielectric_const": 15,
   "saving_stride": 5000,
-  "after_folding_steps": 2500000,
+  "after_folding_steps": 1500000,
   "max_bulge_length": 3,
   "n_frames": 5,
   "schedule": {

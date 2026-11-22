@@ -1,0 +1,1071 @@
+2026-11-22 13:35:45,276 DEBUG Stopped menu probe after 2 seconds
+2026-11-22 13:35:45,276 DEBUG Force-field probe:
+
+Select the Force Field:
+From '/home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/share/gromacs/top':
+ 1: AMBER03 protein, nucleic AMBER94 (Duan et al., J. Comp. Chem. 24, 1999-2012, 2003)
+ 2: AMBER94 force field (Cornell et al., JACS 117, 5179-5197, 1995)
+ 3: AMBER96 protein, nucleic AMBER94 (Kollman et al., Acc. Chem. Res. 29, 461-469, 1996)
+ 4: AMBER99 force field BSC1 (Orozco et al. Nature methods, 13(1), pp.55-58.)
+ 5: AMBER99 force field BSC1 (Orozco et al. Nature methods, 13(1), pp.55-58.) with Joung-Cheathm ION params 
+ 6: AMBER99 protein, nucleic AMBER94 (Wang et al., J. Comp. Chem. 21, 1049-1074, 2000)
+ 7: AMBER99SB protein, nucleic AMBER94 (Hornak et al., Proteins 65, 712-725, 2006)
+ 8: AMBER99SB-ILDN protein, nucleic AMBER94 (Lindorff-Larsen et al., Proteins 78, 1950-58, 2010)
+ 9: AMBER99SB-ILDN protein, nucleic AMBER94, RNA chiOL3 (Lindorff-Larsen et al., Proteins 78, 1950-58, 2010)
+10: AMBERGS force field (Garcia & Sanbonmatsu, PNAS 99, 2782-2787, 2002)
+11: CHARMM all-atom force field
+12: CHARMM27 all-atom force field (CHARM22 plus CMAP for proteins)
+13: GROMOS96 43a1 force field
+14: GROMOS96 43a2 force field (improved alkane dihedrals)
+15: GROMOS96 45a3 force field (Schuler JCC 2001 22 1205)
+16: GROMOS96 53a5 force field (JCC 2004 vol 25 pag 1656)
+17: GROMOS96 53a6 force field (JCC 2004 vol 25 pag 1656)
+18: GROMOS96 54a7 force field (Eur. Biophys. J. (2011), 40,, 843-856, DOI: 10.1007/s00249-011-0700-9)
+19: OL15 nucleic (Zgarbova et al., J. Chem. Theory Comput. 11, 5723-36, 2015
+20: OL21 nucleic (Zgarbova et al., J. Chem. Theory Comput. 17, 6292-6301, 2021
+21: OPLS-AA/L all-atom force field (2001 aminoacid dihedrals)
+
+                 :-) GROMACS - gmx pdb2gmx, 2020.4-MODIFIED (-:
+
+                            GROMACS is written by:
+     Emile Apol      Rossen Apostolov      Paul Bauer     Herman J.C. Berendsen
+    Par Bjelkmar      Christian Blau   Viacheslav Bolnykh     Kevin Boyd    
+ Aldert van Buuren   Rudi van Drunen     Anton Feenstra       Alan Gray     
+  Gerrit Groenhof     Anca Hamuraru    Vincent Hindriksen  M. Eric Irrgang  
+  Aleksei Iupinov   Christoph Junghans     Joe Jordan     Dimitrios Karkoulis
+    Peter Kasson        Jiri Kraus      Carsten Kutzner      Per Larsson    
+  Justin A. Lemkul    Viveca Lindahl    Magnus Lundborg     Erik Marklund   
+    Pascal Merz     Pieter Meulenhoff    Teemu Murtola       Szilard Pall   
+    Sander Pronk      Roland Schulz      Michael Shirts    Alexey Shvetsov  
+   Alfons Sijbers     Peter Tieleman      Jon Vincent      Teemu Virolainen 
+ Christian Wennberg    Maarten Wolf      Artem Zhmurov   
+                           and the project leaders:
+        Mark Abraham, Berk Hess, Erik Lindahl, and David van der Spoel
+
+Copyright (c) 1991-2000, University of Groningen, The Netherlands.
+Copyright (c) 2001-2019, The GROMACS development team at
+Uppsala University, Stockholm University and
+the Royal Institute of Technology, Sweden.
+check out http://www.gromacs.org for more information.
+
+GROMACS is free software; you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License
+as published by the Free Software Foundation; either version 2.1
+of the License, or (at your option) any later version.
+
+GROMACS:      gmx pdb2gmx, version 2020.4-MODIFIED
+Executable:   /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/bin/gmx
+Data prefix:  /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u
+Working dir:  /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api
+Command line:
+  gmx pdb2gmx -f /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/strand.pdb -o /tmp/tmppi0sqlbg/conf.pdb -p /tmp/tmppi0sqlbg/topol.top -i /tmp/tmppi0sqlbg/posre.itp
+
+2026-11-22 13:35:45,277 DEBUG Running in /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api: ['gmx', 'pdb2gmx', '-f', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/strand.pdb', '-o', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/conf.pdb', '-p', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/topol.top', '-i', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/posre.itp', '-water', 'tip3p']
+2026-11-22 13:35:45,277 DEBUG GROMACS stdout/stderr:
+                 :-) GROMACS - gmx pdb2gmx, 2020.4-MODIFIED (-:
+
+                            GROMACS is written by:
+     Emile Apol      Rossen Apostolov      Paul Bauer     Herman J.C. Berendsen
+    Par Bjelkmar      Christian Blau   Viacheslav Bolnykh     Kevin Boyd    
+ Aldert van Buuren   Rudi van Drunen     Anton Feenstra       Alan Gray     
+  Gerrit Groenhof     Anca Hamuraru    Vincent Hindriksen  M. Eric Irrgang  
+  Aleksei Iupinov   Christoph Junghans     Joe Jordan     Dimitrios Karkoulis
+    Peter Kasson        Jiri Kraus      Carsten Kutzner      Per Larsson    
+  Justin A. Lemkul    Viveca Lindahl    Magnus Lundborg     Erik Marklund   
+    Pascal Merz     Pieter Meulenhoff    Teemu Murtola       Szilard Pall   
+    Sander Pronk      Roland Schulz      Michael Shirts    Alexey Shvetsov  
+   Alfons Sijbers     Peter Tieleman      Jon Vincent      Teemu Virolainen 
+ Christian Wennberg    Maarten Wolf      Artem Zhmurov   
+                           and the project leaders:
+        Mark Abraham, Berk Hess, Erik Lindahl, and David van der Spoel
+
+Copyright (c) 1991-2000, University of Groningen, The Netherlands.
+Copyright (c) 2001-2019, The GROMACS development team at
+Uppsala University, Stockholm University and
+the Royal Institute of Technology, Sweden.
+check out http://www.gromacs.org for more information.
+
+GROMACS is free software; you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License
+as published by the Free Software Foundation; either version 2.1
+of the License, or (at your option) any later version.
+
+GROMACS:      gmx pdb2gmx, version 2020.4-MODIFIED
+Executable:   /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/bin/gmx
+Data prefix:  /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u
+Working dir:  /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api
+Command line:
+  gmx pdb2gmx -f /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/strand.pdb -o /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/conf.pdb -p /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/topol.top -i /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/posre.itp -water tip3p
+
+Opening force field file /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/share/gromacs/top/bsc1_vdW.ff/aminoacids.r2b
+Opening force field file /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/share/gromacs/top/bsc1_vdW.ff/dna.r2b
+Opening force field file /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/share/gromacs/top/bsc1_vdW.ff/rna.r2b
+All occupancies are one
+Opening force field file /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/share/gromacs/top/bsc1_vdW.ff/atomtypes.atp
+Opening force field file /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/share/gromacs/top/bsc1_vdW.ff/aminoacids.rtp
+Opening force field file /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/share/gromacs/top/bsc1_vdW.ff/dna.rtp
+Opening force field file /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/share/gromacs/top/bsc1_vdW.ff/rna.rtp
+Opening force field file /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/share/gromacs/top/bsc1_vdW.ff/aminoacids.hdb
+Opening force field file /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/share/gromacs/top/bsc1_vdW.ff/dna.hdb
+Opening force field file /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/share/gromacs/top/bsc1_vdW.ff/rna.hdb
+Opening force field file /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/share/gromacs/top/bsc1_vdW.ff/aminoacids.n.tdb
+Opening force field file /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/share/gromacs/top/bsc1_vdW.ff/aminoacids.c.tdb
+8 out of 8 lines of specbond.dat converted successfully
+Opening force field file /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/share/gromacs/top/bsc1_vdW.ff/aminoacids.arn
+Opening force field file /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/share/gromacs/top/bsc1_vdW.ff/dna.arn
+Opening force field file /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/share/gromacs/top/bsc1_vdW.ff/rna.arn
+Making bonds...
+Number of bonds was 772, now 772
+Generating angles, dihedrals and pairs...
+Before cleaning: 1855 pairs
+Before cleaning: 2050 dihedrals
+Keeping all generated dihedrals
+Making cmap torsions...
+There are 2050 dihedrals,  130 impropers, 1395 angles
+          1789 pairs,      772 bonds and     0 virtual sites
+Total mass 6957.488 a.m.u.
+Total charge -21.000 e
+Writing topology
+
+Writing coordinate file...
+
+
+GROMACS reminds you: "You Could Be a Shadow" (The Breeders)
+Select the Force Field:
+
+From '/home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/share/gromacs/top':
+ 1: AMBER03 protein, nucleic AMBER94 (Duan et al., J. Comp. Chem. 24, 1999-2012, 2003)
+ 2: AMBER94 force field (Cornell et al., JACS 117, 5179-5197, 1995)
+ 3: AMBER96 protein, nucleic AMBER94 (Kollman et al., Acc. Chem. Res. 29, 461-469, 1996)
+ 4: AMBER99 force field BSC1 (Orozco et al. Nature methods, 13(1), pp.55-58.)
+ 5: AMBER99 force field BSC1 (Orozco et al. Nature methods, 13(1), pp.55-58.) with Joung-Cheathm ION params 
+ 6: AMBER99 protein, nucleic AMBER94 (Wang et al., J. Comp. Chem. 21, 1049-1074, 2000)
+ 7: AMBER99SB protein, nucleic AMBER94 (Hornak et al., Proteins 65, 712-725, 2006)
+ 8: AMBER99SB-ILDN protein, nucleic AMBER94 (Lindorff-Larsen et al., Proteins 78, 1950-58, 2010)
+ 9: AMBER99SB-ILDN protein, nucleic AMBER94, RNA chiOL3 (Lindorff-Larsen et al., Proteins 78, 1950-58, 2010)
+10: AMBERGS force field (Garcia & Sanbonmatsu, PNAS 99, 2782-2787, 2002)
+11: CHARMM all-atom force field
+12: CHARMM27 all-atom force field (CHARM22 plus CMAP for proteins)
+13: GROMOS96 43a1 force field
+14: GROMOS96 43a2 force field (improved alkane dihedrals)
+15: GROMOS96 45a3 force field (Schuler JCC 2001 22 1205)
+16: GROMOS96 53a5 force field (JCC 2004 vol 25 pag 1656)
+17: GROMOS96 53a6 force field (JCC 2004 vol 25 pag 1656)
+18: GROMOS96 54a7 force field (Eur. Biophys. J. (2011), 40,, 843-856, DOI: 10.1007/s00249-011-0700-9)
+19: OL15 nucleic (Zgarbova et al., J. Chem. Theory Comput. 11, 5723-36, 2015
+20: OL21 nucleic (Zgarbova et al., J. Chem. Theory Comput. 17, 6292-6301, 2021
+21: OPLS-AA/L all-atom force field (2001 aminoacid dihedrals)
+
+Using the Bsc1_vdW force field in directory bsc1_vdW.ff
+
+going to rename bsc1_vdW.ff/aminoacids.r2b
+going to rename bsc1_vdW.ff/dna.r2b
+going to rename bsc1_vdW.ff/rna.r2b
+Reading /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/strand.pdb...
+Read '', 712 atoms
+Analyzing pdb file
+Splitting chemical chains based on TER records or chain id changing.
+There are 1 chains and 0 blocks of water and 22 residues with 712 atoms
+
+  chain  #res #atoms
+  1 'A'    22    712  
+
+Reading residue database... (Bsc1_vdW)
+Processing chain 1 'A' (712 atoms, 22 residues)
+Identified residue DG1 as a starting terminus.
+Identified residue DT22 as a ending terminus.
+Checking for duplicate atoms....
+Generating any missing hydrogen atoms and/or adding termini.
+Now there are 22 residues with 712 atoms
+		--------- PLEASE NOTE ------------
+You have successfully generated a topology from: /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/strand.pdb.
+The Bsc1_vdW force field and the tip3p water model are used.
+		--------- ETON ESAELP ------------
+2026-11-22 13:35:45,393 INFO pdb2gmx completed successfully
+2026-11-22 13:35:45,461 DEBUG Running in /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api: ['gmx', 'editconf', '-f', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/conf.pdb', '-bt', 'dodecahedron', '-d', '1.4', '-c', '-o', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/conf_box.pdb']
+2026-11-22 13:35:45,461 DEBUG GROMACS stdout/stderr:
+                :-) GROMACS - gmx editconf, 2020.4-MODIFIED (-:
+
+                            GROMACS is written by:
+     Emile Apol      Rossen Apostolov      Paul Bauer     Herman J.C. Berendsen
+    Par Bjelkmar      Christian Blau   Viacheslav Bolnykh     Kevin Boyd    
+ Aldert van Buuren   Rudi van Drunen     Anton Feenstra       Alan Gray     
+  Gerrit Groenhof     Anca Hamuraru    Vincent Hindriksen  M. Eric Irrgang  
+  Aleksei Iupinov   Christoph Junghans     Joe Jordan     Dimitrios Karkoulis
+    Peter Kasson        Jiri Kraus      Carsten Kutzner      Per Larsson    
+  Justin A. Lemkul    Viveca Lindahl    Magnus Lundborg     Erik Marklund   
+    Pascal Merz     Pieter Meulenhoff    Teemu Murtola       Szilard Pall   
+    Sander Pronk      Roland Schulz      Michael Shirts    Alexey Shvetsov  
+   Alfons Sijbers     Peter Tieleman      Jon Vincent      Teemu Virolainen 
+ Christian Wennberg    Maarten Wolf      Artem Zhmurov   
+                           and the project leaders:
+        Mark Abraham, Berk Hess, Erik Lindahl, and David van der Spoel
+
+Copyright (c) 1991-2000, University of Groningen, The Netherlands.
+Copyright (c) 2001-2019, The GROMACS development team at
+Uppsala University, Stockholm University and
+the Royal Institute of Technology, Sweden.
+check out http://www.gromacs.org for more information.
+
+GROMACS is free software; you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License
+as published by the Free Software Foundation; either version 2.1
+of the License, or (at your option) any later version.
+
+GROMACS:      gmx editconf, version 2020.4-MODIFIED
+Executable:   /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/bin/gmx
+Data prefix:  /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u
+Working dir:  /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api
+Command line:
+  gmx editconf -f /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/conf.pdb -bt dodecahedron -d 1.4 -c -o /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/conf_box.pdb
+
+
+Note that major changes are planned in future for editconf, to improve usability and utility.
+GROMACS reminds you: "For those who want some proof that physicists are human, the proof is in the idiocy of all the different units which they use for measuring energy." (Richard Feynman)
+Read 712 atoms
+
+No velocities found
+    system size :  2.018  2.099  7.560 (nm)
+    diameter    :  7.579               (nm)
+    center      :  0.029  0.039 -3.514 (nm)
+    box vectors :  0.000  0.000  0.000 (nm)
+    box angles  :   0.00   0.00   0.00 (degrees)
+    box volume  :   0.00               (nm^3)
+    shift       :  7.755  7.745  7.184 (nm)
+new center      :  7.785  7.785  3.670 (nm)
+new box vectors : 10.379 10.379 10.379 (nm)
+new box angles  :  60.00  60.00  90.00 (degrees)
+new box volume  : 790.68               (nm^3)
+2026-11-22 13:35:45,483 INFO editconf completed successfully
+2026-11-22 13:35:45,485 DEBUG Running in /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api: ['gmx', 'grompp', '-f', '/home/michal/miniconda3/envs/env_test_g4builder/lib/python3.10/site-packages/g4_builder/data/mdp/em.mdp', '-p', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/topol.top', '-c', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/conf_box.pdb', '-o', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/em.tpr', '-maxwarn', '1']
+2026-11-22 13:35:45,485 DEBUG GROMACS stdout/stderr:
+                 :-) GROMACS - gmx grompp, 2020.4-MODIFIED (-:
+
+                            GROMACS is written by:
+     Emile Apol      Rossen Apostolov      Paul Bauer     Herman J.C. Berendsen
+    Par Bjelkmar      Christian Blau   Viacheslav Bolnykh     Kevin Boyd    
+ Aldert van Buuren   Rudi van Drunen     Anton Feenstra       Alan Gray     
+  Gerrit Groenhof     Anca Hamuraru    Vincent Hindriksen  M. Eric Irrgang  
+  Aleksei Iupinov   Christoph Junghans     Joe Jordan     Dimitrios Karkoulis
+    Peter Kasson        Jiri Kraus      Carsten Kutzner      Per Larsson    
+  Justin A. Lemkul    Viveca Lindahl    Magnus Lundborg     Erik Marklund   
+    Pascal Merz     Pieter Meulenhoff    Teemu Murtola       Szilard Pall   
+    Sander Pronk      Roland Schulz      Michael Shirts    Alexey Shvetsov  
+   Alfons Sijbers     Peter Tieleman      Jon Vincent      Teemu Virolainen 
+ Christian Wennberg    Maarten Wolf      Artem Zhmurov   
+                           and the project leaders:
+        Mark Abraham, Berk Hess, Erik Lindahl, and David van der Spoel
+
+Copyright (c) 1991-2000, University of Groningen, The Netherlands.
+Copyright (c) 2001-2019, The GROMACS development team at
+Uppsala University, Stockholm University and
+the Royal Institute of Technology, Sweden.
+check out http://www.gromacs.org for more information.
+
+GROMACS is free software; you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License
+as published by the Free Software Foundation; either version 2.1
+of the License, or (at your option) any later version.
+
+GROMACS:      gmx grompp, version 2020.4-MODIFIED
+Executable:   /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/bin/gmx
+Data prefix:  /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u
+Working dir:  /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api
+Command line:
+  gmx grompp -f /home/michal/miniconda3/envs/env_test_g4builder/lib/python3.10/site-packages/g4_builder/data/mdp/em.mdp -p /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/topol.top -c /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/conf_box.pdb -o /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/em.tpr -maxwarn 1
+
+Ignoring obsolete mdp entry 'ns_type'
+
+NOTE 1 [file /home/michal/miniconda3/envs/env_test_g4builder/lib/python3.10/site-packages/g4_builder/data/mdp/em.mdp]:
+  With Verlet lists the optimal nstlist is >= 10, with GPUs >= 20. Note
+  that with the Verlet scheme, nstlist has no effect on the accuracy of
+  your simulation.
+
+Setting the LD random seed to 880812536
+Generated 2608 of the 2628 non-bonded parameter combinations
+Generating 1-4 interactions: fudge = 0.5
+Generated 2628 of the 2628 1-4 parameter combinations
+Excluding 3 bonded neighbours molecule type 'DNA_chain_A'
+
+NOTE 2 [file topol.top, line 6939]:
+  System has non-zero total charge: -21.000000
+  Total charge should normally be an integer. See
+  http://www.gromacs.org/Documentation/Floating_Point_Arithmetic
+  for discussion on how close it should be to an integer.
+  
+
+
+
+
+WARNING 1 [file topol.top, line 6939]:
+++++ PLEASE READ AND CITE THE FOLLOWING REFERENCE ++++
+  You are using Ewald electrostatics in a system with net charge. This can
+J. S. Hub, B. L. de Groot, H. Grubmueller, G. Groenhof
+  lead to severe artifacts, such as ions moving into regions with low
+Quantifying Artifacts in Ewald Simulations of Inhomogeneous Systems with a Net
+  dielectric, due to the uniform background charge. We suggest to
+Charge
+  neutralize your system with counter ions, possibly in combination with a
+J. Chem. Theory Comput. 10 (2014) pp. 381-393
+  physiological salt concentration.
+-------- -------- --- Thank You --- -------- --------
+
+
+Number of degrees of freedom in T-Coupling group rest is 2133.00
+Estimate for the relative computational load of the PME mesh part: 0.98
+
+NOTE 3 [file /home/michal/miniconda3/envs/env_test_g4builder/lib/python3.10/site-packages/g4_builder/data/mdp/em.mdp]:
+  The optimal PME mesh load for parallel simulations is below 0.5
+  and for highly parallel simulations between 0.25 and 0.33,
+  for higher performance, increase the cut-off and the PME grid spacing.
+
+
+
+There were 3 notes
+
+There was 1 warning
+
+GROMACS reminds you: "Clickety Clickety Click" (System Manager From Hell)
+
+Analysing residue names:
+There are:    22        DNA residues
+Calculating fourier grid dimensions for X Y Z
+Using a fourier grid of 96x96x96, spacing 0.108 0.108 0.108
+This run will generate roughly 0 Mb of data
+2026-11-22 13:35:45,572 INFO grompp completed successfully
+2026-11-22 13:35:45,573 DEBUG Running in /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api: ['gmx', 'mdrun', '-deffnm', 'em', '-c', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/em.pdb']
+2026-11-22 13:35:45,573 DEBUG GROMACS stdout/stderr:
+                  :-) GROMACS - gmx mdrun, 2020.4-MODIFIED (-:
+
+                            GROMACS is written by:
+     Emile Apol      Rossen Apostolov      Paul Bauer     Herman J.C. Berendsen
+    Par Bjelkmar      Christian Blau   Viacheslav Bolnykh     Kevin Boyd    
+ Aldert van Buuren   Rudi van Drunen     Anton Feenstra       Alan Gray     
+  Gerrit Groenhof     Anca Hamuraru    Vincent Hindriksen  M. Eric Irrgang  
+  Aleksei Iupinov   Christoph Junghans     Joe Jordan     Dimitrios Karkoulis
+    Peter Kasson        Jiri Kraus      Carsten Kutzner      Per Larsson    
+  Justin A. Lemkul    Viveca Lindahl    Magnus Lundborg     Erik Marklund   
+    Pascal Merz     Pieter Meulenhoff    Teemu Murtola       Szilard Pall   
+    Sander Pronk      Roland Schulz      Michael Shirts    Alexey Shvetsov  
+   Alfons Sijbers     Peter Tieleman      Jon Vincent      Teemu Virolainen 
+ Christian Wennberg    Maarten Wolf      Artem Zhmurov   
+                           and the project leaders:
+        Mark Abraham, Berk Hess, Erik Lindahl, and David van der Spoel
+
+Copyright (c) 1991-2000, University of Groningen, The Netherlands.
+Copyright (c) 2001-2019, The GROMACS development team at
+Uppsala University, Stockholm University and
+the Royal Institute of Technology, Sweden.
+check out http://www.gromacs.org for more information.
+
+GROMACS is free software; you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License
+as published by the Free Software Foundation; either version 2.1
+of the License, or (at your option) any later version.
+
+GROMACS:      gmx mdrun, version 2020.4-MODIFIED
+Executable:   /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/bin/gmx
+Data prefix:  /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u
+Working dir:  /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api
+Command line:
+  gmx mdrun -deffnm em -c /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/em.pdb
+
+Reading file em.tpr, VERSION 2020.4-MODIFIED (single precision)
+
+NOTE: Parallelization is limited by the small number of atoms,
+      only starting 1 thread-MPI ranks.
+      You can use the -nt and/or -ntmpi option to optimize the number of threads.
+
+1 GPU selected for this run.
+Mapping of GPU IDs to the 1 GPU task in the 1 rank on this node:
+  PP:0
+PP tasks will do (non-perturbed) short-ranged interactions on the GPU
+PP task will update and constrain coordinates on the CPU
+Using 1 MPI thread
+
+Non-default thread affinity set, disabling internal thread affinity
+
+Using 16 OpenMP threads 
+
+
+Steepest Descents:
+   Tolerance (Fmax)   =  1.00000e+03
+   Number of steps    =        50000
+
+writing lowest energy coordinates.
+
+Steepest Descents converged to Fmax < 1000 in 17 steps
+Potential Energy  = -7.5752539e+03
+Maximum force     =  6.8740424e+02 on atom 695
+Norm of force     =  1.7709630e+02
+
+GROMACS reminds you: "Hold On Like Cliffhanger" (Urban Dance Squad)
+
+2026-11-22 13:35:47,287 INFO mdrun completed successfully
+2026-11-22 13:35:54,573 DEBUG Running in /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api: ['gmx', 'grompp', '-f', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.mdp', '-p', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/topol.top', '-c', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/em.pdb', '-o', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr', '-maxwarn', '2']
+2026-11-22 13:35:54,573 DEBUG GROMACS stdout/stderr:
+                 :-) GROMACS - gmx grompp, 2020.4-MODIFIED (-:
+
+                            GROMACS is written by:
+     Emile Apol      Rossen Apostolov      Paul Bauer     Herman J.C. Berendsen
+    Par Bjelkmar      Christian Blau   Viacheslav Bolnykh     Kevin Boyd    
+ Aldert van Buuren   Rudi van Drunen     Anton Feenstra       Alan Gray     
+  Gerrit Groenhof     Anca Hamuraru    Vincent Hindriksen  M. Eric Irrgang  
+  Aleksei Iupinov   Christoph Junghans     Joe Jordan     Dimitrios Karkoulis
+    Peter Kasson        Jiri Kraus      Carsten Kutzner      Per Larsson    
+  Justin A. Lemkul    Viveca Lindahl    Magnus Lundborg     Erik Marklund   
+    Pascal Merz     Pieter Meulenhoff    Teemu Murtola       Szilard Pall   
+    Sander Pronk      Roland Schulz      Michael Shirts    Alexey Shvetsov  
+   Alfons Sijbers     Peter Tieleman      Jon Vincent      Teemu Virolainen 
+ Christian Wennberg    Maarten Wolf      Artem Zhmurov   
+                           and the project leaders:
+        Mark Abraham, Berk Hess, Erik Lindahl, and David van der Spoel
+
+Copyright (c) 1991-2000, University of Groningen, The Netherlands.
+Copyright (c) 2001-2019, The GROMACS development team at
+Uppsala University, Stockholm University and
+the Royal Institute of Technology, Sweden.
+check out http://www.gromacs.org for more information.
+
+GROMACS is free software; you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License
+as published by the Free Software Foundation; either version 2.1
+of the License, or (at your option) any later version.
+
+GROMACS:      gmx grompp, version 2020.4-MODIFIED
+Executable:   /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/bin/gmx
+Data prefix:  /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u
+Working dir:  /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api
+Command line:
+  gmx grompp -f /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.mdp -p /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/topol.top -c /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/em.pdb -o /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr -maxwarn 2
+
+Ignoring obsolete mdp entry 'title'
+Ignoring obsolete mdp entry 'ns_type'
+
+WARNING 1 [file /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.mdp]:
+  Removing the rotation around the center of mass in a periodic system,
+  this can lead to artifacts. Only use this on a single (cluster of)
+  molecules. This cluster should not cross periodic boundaries.
+
+Setting the LD random seed to -812903247
+Generated 2608 of the 2628 non-bonded parameter combinations
+Generating 1-4 interactions: fudge = 0.5
+Generated 2628 of the 2628 1-4 parameter combinations
+Excluding 3 bonded neighbours molecule type 'DNA_chain_A'
+
+NOTE 1 [file topol.top, line 6939]:
+  System has non-zero total charge: -21.000000
+  Total charge should normally be an integer. See
+  http://www.gromacs.org/Documentation/Floating_Point_Arithmetic
+  for discussion on how close it should be to an integer.
+  
+turning H bonds into constraints...
+
+
+
+++++ PLEASE READ AND CITE THE FOLLOWING REFERENCE ++++
+
+J. S. Hub, B. L. de Groot, H. Grubmueller, G. Groenhof
+WARNING 2 [file topol.top, line 6939]:
+Quantifying Artifacts in Ewald Simulations of Inhomogeneous Systems with a Net
+  You are using Ewald electrostatics in a system with net charge. This can
+Charge
+  lead to severe artifacts, such as ions moving into regions with low
+J. Chem. Theory Comput. 10 (2014) pp. 381-393
+  dielectric, due to the uniform background charge. We suggest to
+-------- -------- --- Thank You --- -------- --------
+  neutralize your system with counter ions, possibly in combination with a
+
+  physiological salt concentration.
+
+Number of degrees of freedom in T-Coupling group System is 1884.00
+Estimate for the relative computational load of the PME mesh part: 0.96
+
+NOTE 2 [file /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.mdp]:
+  The optimal PME mesh load for parallel simulations is below 0.5
+  and for highly parallel simulations between 0.25 and 0.33,
+  for higher performance, increase the cut-off and the PME grid spacing.
+
+
+
+There were 2 notes
+
+There were 2 warnings
+
+GROMACS reminds you: "There's Nothing We Can't Fix, 'coz We Can Do It in the Mix" (Indeep)
+Analysing residue names:
+
+There are:    22        DNA residues
+Determining Verlet buffer for a tolerance of 0.005 kJ/mol/ps at 300 K
+Calculated rlist for 1x1 atom pair-list as 1.000 nm, buffer size 0.000 nm
+Set rlist, assuming 4x4 atom pair-list, to 1.000 nm, buffer size 0.000 nm
+Note that mdrun will redetermine rlist based on the actual pair-list setup
+Calculating fourier grid dimensions for X Y Z
+Using a fourier grid of 72x72x72, spacing 0.144 0.144 0.144
+This run will generate roughly 21 Mb of data
+2026-11-22 13:35:54,684 INFO grompp completed successfully
+2026-11-22 17:53:19,519 DEBUG Running in /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api: ['gmx', 'trjconv', '-f', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.xtc', '-s', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr', '-dump', '25770', '-o', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/frame_1.pdb']
+2026-11-22 17:53:19,519 DEBUG GROMACS stdout/stderr:
+                 :-) GROMACS - gmx trjconv, 2020.4-MODIFIED (-:
+
+                            GROMACS is written by:
+     Emile Apol      Rossen Apostolov      Paul Bauer     Herman J.C. Berendsen
+    Par Bjelkmar      Christian Blau   Viacheslav Bolnykh     Kevin Boyd    
+ Aldert van Buuren   Rudi van Drunen     Anton Feenstra       Alan Gray     
+  Gerrit Groenhof     Anca Hamuraru    Vincent Hindriksen  M. Eric Irrgang  
+  Aleksei Iupinov   Christoph Junghans     Joe Jordan     Dimitrios Karkoulis
+    Peter Kasson        Jiri Kraus      Carsten Kutzner      Per Larsson    
+  Justin A. Lemkul    Viveca Lindahl    Magnus Lundborg     Erik Marklund   
+    Pascal Merz     Pieter Meulenhoff    Teemu Murtola       Szilard Pall   
+    Sander Pronk      Roland Schulz      Michael Shirts    Alexey Shvetsov  
+   Alfons Sijbers     Peter Tieleman      Jon Vincent      Teemu Virolainen 
+ Christian Wennberg    Maarten Wolf      Artem Zhmurov   
+                           and the project leaders:
+        Mark Abraham, Berk Hess, Erik Lindahl, and David van der Spoel
+
+Copyright (c) 1991-2000, University of Groningen, The Netherlands.
+Copyright (c) 2001-2019, The GROMACS development team at
+Uppsala University, Stockholm University and
+the Royal Institute of Technology, Sweden.
+check out http://www.gromacs.org for more information.
+
+GROMACS is free software; you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License
+as published by the Free Software Foundation; either version 2.1
+of the License, or (at your option) any later version.
+
+GROMACS:      gmx trjconv, version 2020.4-MODIFIED
+Executable:   /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/bin/gmx
+Data prefix:  /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u
+Working dir:  /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api
+Command line:
+  gmx trjconv -f /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.xtc -s /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr -dump 25770 -o /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/frame_1.pdb
+
+Will write pdb: Protein data bank file
+Reading file /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr, VERSION 2020.4-MODIFIED (single precision)
+Reading file /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr, VERSION 2020.4-MODIFIED (single precision)
+Group     0 (         System) has   712 elements
+Group     1 (            DNA) has   712 elements
+Select a group: 
+Reading frame       0 time    0.000   
+Precision of /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.xtc is 0.001 (nm)
+
+Reading frame       1 time   10.000   
+Reading frame       0 time    0.000   
+Reading frame       1 time   10.000   
+Reading frame       2 time   20.000   
+Reading frame       3 time   30.000   
+Reading frame       4 time   40.000   
+Reading frame       5 time   50.000   
+Reading frame       6 time   60.000   
+Reading frame       7 time   70.000   
+Reading frame       8 time   80.000   
+Reading frame       9 time   90.000   
+Reading frame      10 time  100.000   
+Reading frame      11 time  110.000   
+Reading frame      12 time  120.000   
+Reading frame      13 time  130.000   
+Reading frame      14 time  140.000   
+Reading frame      15 time  150.000   
+Reading frame      16 time  160.000   
+Reading frame      17 time  170.000   
+Reading frame      18 time  180.000   
+Reading frame      19 time  190.000   
+Reading frame      20 time  200.000   
+Reading frame      30 time  300.000   
+Reading frame      40 time  400.000   
+Reading frame      50 time  500.000   
+Reading frame      60 time  600.000   
+Reading frame      70 time  700.000   
+Reading frame      80 time  800.000   
+Reading frame      90 time  900.000   
+Reading frame     100 time 1000.000   
+Reading frame     110 time 1100.000   
+Reading frame     120 time 1200.000   
+Reading frame     130 time 1300.000   
+Reading frame     140 time 1400.000   
+Reading frame     150 time 1500.000   
+Reading frame     160 time 1600.000   
+Reading frame     170 time 1700.000   
+Reading frame     180 time 1800.000   
+Reading frame     190 time 1900.000   
+Reading frame     200 time 2000.000   
+Reading frame     300 time 3000.000   
+Reading frame     400 time 4000.000   
+Reading frame     500 time 5000.000   
+Reading frame     600 time 6000.000   
+Reading frame     700 time 7000.000   
+Reading frame     800 time 8000.000   
+Reading frame     900 time 9000.000   
+Reading frame    1000 time 10000.000   
+Reading frame    1100 time 11000.000   
+Reading frame    1200 time 12000.000   
+Reading frame    1300 time 13000.000   
+Reading frame    1400 time 14000.000   
+Reading frame    1500 time 15000.000   
+Reading frame    1600 time 16000.000   
+Reading frame    1700 time 17000.000   
+Reading frame    1800 time 18000.000   
+Reading frame    1900 time 19000.000   
+Reading frame    2000 time 20000.000   
+Dumping frame at t= 25770 ps
+ ->  frame      0 time 25770.000      
+
+GROMACS reminds you: "Science adjusts its views based on what's observed. Faith is the denial of observation so that belief can be preserved." (Tim Minchin)
+
+Note that major changes are planned in future for trjconv, to improve usability and utility.
+Select group for output
+Selected 0: 'System'
+2026-11-22 17:53:19,593 INFO trjconv completed successfully
+2026-11-22 17:53:19,594 DEBUG Running in /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api: ['gmx', 'trjconv', '-f', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.xtc', '-s', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr', '-dump', '28580', '-o', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/frame_2.pdb']
+2026-11-22 17:53:19,595 DEBUG GROMACS stdout/stderr:
+                 :-) GROMACS - gmx trjconv, 2020.4-MODIFIED (-:
+
+                            GROMACS is written by:
+     Emile Apol      Rossen Apostolov      Paul Bauer     Herman J.C. Berendsen
+    Par Bjelkmar      Christian Blau   Viacheslav Bolnykh     Kevin Boyd    
+ Aldert van Buuren   Rudi van Drunen     Anton Feenstra       Alan Gray     
+  Gerrit Groenhof     Anca Hamuraru    Vincent Hindriksen  M. Eric Irrgang  
+  Aleksei Iupinov   Christoph Junghans     Joe Jordan     Dimitrios Karkoulis
+    Peter Kasson        Jiri Kraus      Carsten Kutzner      Per Larsson    
+  Justin A. Lemkul    Viveca Lindahl    Magnus Lundborg     Erik Marklund   
+    Pascal Merz     Pieter Meulenhoff    Teemu Murtola       Szilard Pall   
+    Sander Pronk      Roland Schulz      Michael Shirts    Alexey Shvetsov  
+   Alfons Sijbers     Peter Tieleman      Jon Vincent      Teemu Virolainen 
+ Christian Wennberg    Maarten Wolf      Artem Zhmurov   
+                           and the project leaders:
+        Mark Abraham, Berk Hess, Erik Lindahl, and David van der Spoel
+
+Copyright (c) 1991-2000, University of Groningen, The Netherlands.
+Copyright (c) 2001-2019, The GROMACS development team at
+Uppsala University, Stockholm University and
+the Royal Institute of Technology, Sweden.
+check out http://www.gromacs.org for more information.
+
+GROMACS is free software; you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License
+as published by the Free Software Foundation; either version 2.1
+of the License, or (at your option) any later version.
+
+GROMACS:      gmx trjconv, version 2020.4-MODIFIED
+Executable:   /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/bin/gmx
+Data prefix:  /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u
+Working dir:  /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api
+Command line:
+  gmx trjconv -f /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.xtc -s /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr -dump 28580 -o /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/frame_2.pdb
+
+Will write pdb: Protein data bank file
+Reading file /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr, VERSION 2020.4-MODIFIED (single precision)
+Reading file /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr, VERSION 2020.4-MODIFIED (single precision)
+Group     0 (         System) has   712 elements
+Group     1 (            DNA) has   712 elements
+Select a group: 
+Reading frame       0 time    0.000   
+Precision of /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.xtc is 0.001 (nm)
+
+Reading frame       1 time   10.000   
+Reading frame       0 time    0.000   
+Reading frame       1 time   10.000   
+Reading frame       2 time   20.000   
+Reading frame       3 time   30.000   
+Reading frame       4 time   40.000   
+Reading frame       5 time   50.000   
+Reading frame       6 time   60.000   
+Reading frame       7 time   70.000   
+Reading frame       8 time   80.000   
+Reading frame       9 time   90.000   
+Reading frame      10 time  100.000   
+Reading frame      11 time  110.000   
+Reading frame      12 time  120.000   
+Reading frame      13 time  130.000   
+Reading frame      14 time  140.000   
+Reading frame      15 time  150.000   
+Reading frame      16 time  160.000   
+Reading frame      17 time  170.000   
+Reading frame      18 time  180.000   
+Reading frame      19 time  190.000   
+Reading frame      20 time  200.000   
+Reading frame      30 time  300.000   
+Reading frame      40 time  400.000   
+Reading frame      50 time  500.000   
+Reading frame      60 time  600.000   
+Reading frame      70 time  700.000   
+Reading frame      80 time  800.000   
+Reading frame      90 time  900.000   
+Reading frame     100 time 1000.000   
+Reading frame     110 time 1100.000   
+Reading frame     120 time 1200.000   
+Reading frame     130 time 1300.000   
+Reading frame     140 time 1400.000   
+Reading frame     150 time 1500.000   
+Reading frame     160 time 1600.000   
+Reading frame     170 time 1700.000   
+Reading frame     180 time 1800.000   
+Reading frame     190 time 1900.000   
+Reading frame     200 time 2000.000   
+Reading frame     300 time 3000.000   
+Reading frame     400 time 4000.000   
+Reading frame     500 time 5000.000   
+Reading frame     600 time 6000.000   
+Reading frame     700 time 7000.000   
+Reading frame     800 time 8000.000   
+Reading frame     900 time 9000.000   
+Reading frame    1000 time 10000.000   
+Reading frame    1100 time 11000.000   
+Reading frame    1200 time 12000.000   
+Reading frame    1300 time 13000.000   
+Reading frame    1400 time 14000.000   
+Reading frame    1500 time 15000.000   
+Reading frame    1600 time 16000.000   
+Reading frame    1700 time 17000.000   
+Reading frame    1800 time 18000.000   
+Reading frame    1900 time 19000.000   
+Reading frame    2000 time 20000.000   
+Dumping frame at t= 28580 ps
+ ->  frame      0 time 28580.000      
+
+GROMACS reminds you: "You wouldn't walk into a chemistry lab and mix two clear liquids together just because they look pretty much the same, would you?" (Justin Lemkul)
+
+Note that major changes are planned in future for trjconv, to improve usability and utility.
+Select group for output
+Selected 0: 'System'
+2026-11-22 17:53:19,690 INFO trjconv completed successfully
+2026-11-22 17:53:19,691 DEBUG Running in /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api: ['gmx', 'trjconv', '-f', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.xtc', '-s', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr', '-dump', '28850', '-o', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/frame_3.pdb']
+2026-11-22 17:53:19,692 DEBUG GROMACS stdout/stderr:
+                 :-) GROMACS - gmx trjconv, 2020.4-MODIFIED (-:
+
+                            GROMACS is written by:
+     Emile Apol      Rossen Apostolov      Paul Bauer     Herman J.C. Berendsen
+    Par Bjelkmar      Christian Blau   Viacheslav Bolnykh     Kevin Boyd    
+ Aldert van Buuren   Rudi van Drunen     Anton Feenstra       Alan Gray     
+  Gerrit Groenhof     Anca Hamuraru    Vincent Hindriksen  M. Eric Irrgang  
+  Aleksei Iupinov   Christoph Junghans     Joe Jordan     Dimitrios Karkoulis
+    Peter Kasson        Jiri Kraus      Carsten Kutzner      Per Larsson    
+  Justin A. Lemkul    Viveca Lindahl    Magnus Lundborg     Erik Marklund   
+    Pascal Merz     Pieter Meulenhoff    Teemu Murtola       Szilard Pall   
+    Sander Pronk      Roland Schulz      Michael Shirts    Alexey Shvetsov  
+   Alfons Sijbers     Peter Tieleman      Jon Vincent      Teemu Virolainen 
+ Christian Wennberg    Maarten Wolf      Artem Zhmurov   
+                           and the project leaders:
+        Mark Abraham, Berk Hess, Erik Lindahl, and David van der Spoel
+
+Copyright (c) 1991-2000, University of Groningen, The Netherlands.
+Copyright (c) 2001-2019, The GROMACS development team at
+Uppsala University, Stockholm University and
+the Royal Institute of Technology, Sweden.
+check out http://www.gromacs.org for more information.
+
+GROMACS is free software; you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License
+as published by the Free Software Foundation; either version 2.1
+of the License, or (at your option) any later version.
+
+GROMACS:      gmx trjconv, version 2020.4-MODIFIED
+Executable:   /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/bin/gmx
+Data prefix:  /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u
+Working dir:  /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api
+Command line:
+  gmx trjconv -f /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.xtc -s /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr -dump 28850 -o /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/frame_3.pdb
+
+Will write pdb: Protein data bank file
+Reading file /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr, VERSION 2020.4-MODIFIED (single precision)
+Reading file /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr, VERSION 2020.4-MODIFIED (single precision)
+Group     0 (         System) has   712 elements
+Group     1 (            DNA) has   712 elements
+Select a group: 
+Reading frame       0 time    0.000   
+Precision of /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.xtc is 0.001 (nm)
+
+Reading frame       1 time   10.000   
+Reading frame       0 time    0.000   
+Reading frame       1 time   10.000   
+Reading frame       2 time   20.000   
+Reading frame       3 time   30.000   
+Reading frame       4 time   40.000   
+Reading frame       5 time   50.000   
+Reading frame       6 time   60.000   
+Reading frame       7 time   70.000   
+Reading frame       8 time   80.000   
+Reading frame       9 time   90.000   
+Reading frame      10 time  100.000   
+Reading frame      11 time  110.000   
+Reading frame      12 time  120.000   
+Reading frame      13 time  130.000   
+Reading frame      14 time  140.000   
+Reading frame      15 time  150.000   
+Reading frame      16 time  160.000   
+Reading frame      17 time  170.000   
+Reading frame      18 time  180.000   
+Reading frame      19 time  190.000   
+Reading frame      20 time  200.000   
+Reading frame      30 time  300.000   
+Reading frame      40 time  400.000   
+Reading frame      50 time  500.000   
+Reading frame      60 time  600.000   
+Reading frame      70 time  700.000   
+Reading frame      80 time  800.000   
+Reading frame      90 time  900.000   
+Reading frame     100 time 1000.000   
+Reading frame     110 time 1100.000   
+Reading frame     120 time 1200.000   
+Reading frame     130 time 1300.000   
+Reading frame     140 time 1400.000   
+Reading frame     150 time 1500.000   
+Reading frame     160 time 1600.000   
+Reading frame     170 time 1700.000   
+Reading frame     180 time 1800.000   
+Reading frame     190 time 1900.000   
+Reading frame     200 time 2000.000   
+Reading frame     300 time 3000.000   
+Reading frame     400 time 4000.000   
+Reading frame     500 time 5000.000   
+Reading frame     600 time 6000.000   
+Reading frame     700 time 7000.000   
+Reading frame     800 time 8000.000   
+Reading frame     900 time 9000.000   
+Reading frame    1000 time 10000.000   
+Reading frame    1100 time 11000.000   
+Reading frame    1200 time 12000.000   
+Reading frame    1300 time 13000.000   
+Reading frame    1400 time 14000.000   
+Reading frame    1500 time 15000.000   
+Reading frame    1600 time 16000.000   
+Reading frame    1700 time 17000.000   
+Reading frame    1800 time 18000.000   
+Reading frame    1900 time 19000.000   
+Reading frame    2000 time 20000.000   
+Dumping frame at t= 28850 ps
+ ->  frame      0 time 28850.000      
+Note that major changes are planned in future for trjconv, to improve usability and utility.
+
+Select group for output
+GROMACS reminds you: "Only entropy comes easy." (Anton Chekov)
+Selected 0: 'System'
+
+2026-11-22 17:53:19,769 INFO trjconv completed successfully
+2026-11-22 17:53:19,771 DEBUG Running in /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api: ['gmx', 'trjconv', '-f', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.xtc', '-s', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr', '-dump', '25940', '-o', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/frame_4.pdb']
+2026-11-22 17:53:19,771 DEBUG GROMACS stdout/stderr:
+                 :-) GROMACS - gmx trjconv, 2020.4-MODIFIED (-:
+
+                            GROMACS is written by:
+     Emile Apol      Rossen Apostolov      Paul Bauer     Herman J.C. Berendsen
+    Par Bjelkmar      Christian Blau   Viacheslav Bolnykh     Kevin Boyd    
+ Aldert van Buuren   Rudi van Drunen     Anton Feenstra       Alan Gray     
+  Gerrit Groenhof     Anca Hamuraru    Vincent Hindriksen  M. Eric Irrgang  
+  Aleksei Iupinov   Christoph Junghans     Joe Jordan     Dimitrios Karkoulis
+    Peter Kasson        Jiri Kraus      Carsten Kutzner      Per Larsson    
+  Justin A. Lemkul    Viveca Lindahl    Magnus Lundborg     Erik Marklund   
+    Pascal Merz     Pieter Meulenhoff    Teemu Murtola       Szilard Pall   
+    Sander Pronk      Roland Schulz      Michael Shirts    Alexey Shvetsov  
+   Alfons Sijbers     Peter Tieleman      Jon Vincent      Teemu Virolainen 
+ Christian Wennberg    Maarten Wolf      Artem Zhmurov   
+                           and the project leaders:
+        Mark Abraham, Berk Hess, Erik Lindahl, and David van der Spoel
+
+Copyright (c) 1991-2000, University of Groningen, The Netherlands.
+Copyright (c) 2001-2019, The GROMACS development team at
+Uppsala University, Stockholm University and
+the Royal Institute of Technology, Sweden.
+check out http://www.gromacs.org for more information.
+
+GROMACS is free software; you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License
+as published by the Free Software Foundation; either version 2.1
+of the License, or (at your option) any later version.
+
+GROMACS:      gmx trjconv, version 2020.4-MODIFIED
+Executable:   /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/bin/gmx
+Data prefix:  /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u
+Working dir:  /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api
+Command line:
+  gmx trjconv -f /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.xtc -s /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr -dump 25940 -o /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/frame_4.pdb
+
+Will write pdb: Protein data bank file
+Reading file /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr, VERSION 2020.4-MODIFIED (single precision)
+Reading file /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr, VERSION 2020.4-MODIFIED (single precision)
+Group     0 (         System) has   712 elements
+Group     1 (            DNA) has   712 elements
+Select a group: 
+Reading frame       0 time    0.000   
+Precision of /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.xtc is 0.001 (nm)
+
+Reading frame       1 time   10.000   
+Reading frame       0 time    0.000   
+Reading frame       1 time   10.000   
+Reading frame       2 time   20.000   
+Reading frame       3 time   30.000   
+Reading frame       4 time   40.000   
+Reading frame       5 time   50.000   
+Reading frame       6 time   60.000   
+Reading frame       7 time   70.000   
+Reading frame       8 time   80.000   
+Reading frame       9 time   90.000   
+Reading frame      10 time  100.000   
+Reading frame      11 time  110.000   
+Reading frame      12 time  120.000   
+Reading frame      13 time  130.000   
+Reading frame      14 time  140.000   
+Reading frame      15 time  150.000   
+Reading frame      16 time  160.000   
+Reading frame      17 time  170.000   
+Reading frame      18 time  180.000   
+Reading frame      19 time  190.000   
+Reading frame      20 time  200.000   
+Reading frame      30 time  300.000   
+Reading frame      40 time  400.000   
+Reading frame      50 time  500.000   
+Reading frame      60 time  600.000   
+Reading frame      70 time  700.000   
+Reading frame      80 time  800.000   
+Reading frame      90 time  900.000   
+Reading frame     100 time 1000.000   
+Reading frame     110 time 1100.000   
+Reading frame     120 time 1200.000   
+Reading frame     130 time 1300.000   
+Reading frame     140 time 1400.000   
+Reading frame     150 time 1500.000   
+Reading frame     160 time 1600.000   
+Reading frame     170 time 1700.000   
+Reading frame     180 time 1800.000   
+Reading frame     190 time 1900.000   
+Reading frame     200 time 2000.000   
+Reading frame     300 time 3000.000   
+Reading frame     400 time 4000.000   
+Reading frame     500 time 5000.000   
+Reading frame     600 time 6000.000   
+Reading frame     700 time 7000.000   
+Reading frame     800 time 8000.000   
+Reading frame     900 time 9000.000   
+Reading frame    1000 time 10000.000   
+Reading frame    1100 time 11000.000   
+Reading frame    1200 time 12000.000   
+Reading frame    1300 time 13000.000   
+Reading frame    1400 time 14000.000   
+Reading frame    1500 time 15000.000   
+Reading frame    1600 time 16000.000   
+Reading frame    1700 time 17000.000   
+Reading frame    1800 time 18000.000   
+Reading frame    1900 time 19000.000   
+Reading frame    2000 time 20000.000   
+Dumping frame at t= 25940 ps
+ ->  frame      0 time 25940.000      
+Note that major changes are planned in future for trjconv, to improve usability and utility.
+
+Select group for output
+GROMACS reminds you: "Never measure the height of a mountain until you have reached the top. Then you will see how low it was." (Dag Hammarskjold)
+Selected 0: 'System'
+
+2026-11-22 17:53:19,841 INFO trjconv completed successfully
+2026-11-22 17:53:19,843 DEBUG Running in /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api: ['gmx', 'trjconv', '-f', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.xtc', '-s', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr', '-dump', '25230', '-o', '/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/frame_5.pdb']
+2026-11-22 17:53:19,843 DEBUG GROMACS stdout/stderr:
+                 :-) GROMACS - gmx trjconv, 2020.4-MODIFIED (-:
+
+                            GROMACS is written by:
+     Emile Apol      Rossen Apostolov      Paul Bauer     Herman J.C. Berendsen
+    Par Bjelkmar      Christian Blau   Viacheslav Bolnykh     Kevin Boyd    
+ Aldert van Buuren   Rudi van Drunen     Anton Feenstra       Alan Gray     
+  Gerrit Groenhof     Anca Hamuraru    Vincent Hindriksen  M. Eric Irrgang  
+  Aleksei Iupinov   Christoph Junghans     Joe Jordan     Dimitrios Karkoulis
+    Peter Kasson        Jiri Kraus      Carsten Kutzner      Per Larsson    
+  Justin A. Lemkul    Viveca Lindahl    Magnus Lundborg     Erik Marklund   
+    Pascal Merz     Pieter Meulenhoff    Teemu Murtola       Szilard Pall   
+    Sander Pronk      Roland Schulz      Michael Shirts    Alexey Shvetsov  
+   Alfons Sijbers     Peter Tieleman      Jon Vincent      Teemu Virolainen 
+ Christian Wennberg    Maarten Wolf      Artem Zhmurov   
+                           and the project leaders:
+        Mark Abraham, Berk Hess, Erik Lindahl, and David van der Spoel
+
+Copyright (c) 1991-2000, University of Groningen, The Netherlands.
+Copyright (c) 2001-2019, The GROMACS development team at
+Uppsala University, Stockholm University and
+the Royal Institute of Technology, Sweden.
+check out http://www.gromacs.org for more information.
+
+GROMACS is free software; you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License
+as published by the Free Software Foundation; either version 2.1
+of the License, or (at your option) any later version.
+
+GROMACS:      gmx trjconv, version 2020.4-MODIFIED
+Executable:   /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u/bin/gmx
+Data prefix:  /home/michal/spack/opt/spack/linux-ubuntu20.04-zen2/gcc-9.3.0/gromacs-2020.4-34tpcvngttkfgwriarmhum452bogwo2u
+Working dir:  /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api
+Command line:
+  gmx trjconv -f /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.xtc -s /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr -dump 25230 -o /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/frame_5.pdb
+
+Will write pdb: Protein data bank file
+Reading file /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr, VERSION 2020.4-MODIFIED (single precision)
+Reading file /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.tpr, VERSION 2020.4-MODIFIED (single precision)
+Group     0 (         System) has   712 elements
+Group     1 (            DNA) has   712 elements
+Select a group: 
+Reading frame       0 time    0.000   
+Precision of /home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/smd.xtc is 0.001 (nm)
+
+Reading frame       1 time   10.000   
+Reading frame       0 time    0.000   
+Reading frame       1 time   10.000   
+Reading frame       2 time   20.000   
+Reading frame       3 time   30.000   
+Reading frame       4 time   40.000   
+Reading frame       5 time   50.000   
+Reading frame       6 time   60.000   
+Reading frame       7 time   70.000   
+Reading frame       8 time   80.000   
+Reading frame       9 time   90.000   
+Reading frame      10 time  100.000   
+Reading frame      11 time  110.000   
+Reading frame      12 time  120.000   
+Reading frame      13 time  130.000   
+Reading frame      14 time  140.000   
+Reading frame      15 time  150.000   
+Reading frame      16 time  160.000   
+Reading frame      17 time  170.000   
+Reading frame      18 time  180.000   
+Reading frame      19 time  190.000   
+Reading frame      20 time  200.000   
+Reading frame      30 time  300.000   
+Reading frame      40 time  400.000   
+Reading frame      50 time  500.000   
+Reading frame      60 time  600.000   
+Reading frame      70 time  700.000   
+Reading frame      80 time  800.000   
+Reading frame      90 time  900.000   
+Reading frame     100 time 1000.000   
+Reading frame     110 time 1100.000   
+Reading frame     120 time 1200.000   
+Reading frame     130 time 1300.000   
+Reading frame     140 time 1400.000   
+Reading frame     150 time 1500.000   
+Reading frame     160 time 1600.000   
+Reading frame     170 time 1700.000   
+Reading frame     180 time 1800.000   
+Reading frame     190 time 1900.000   
+Reading frame     200 time 2000.000   
+Reading frame     300 time 3000.000   
+Reading frame     400 time 4000.000   
+Reading frame     500 time 5000.000   
+Reading frame     600 time 6000.000   
+Reading frame     700 time 7000.000   
+Reading frame     800 time 8000.000   
+Reading frame     900 time 9000.000   
+Reading frame    1000 time 10000.000   
+Reading frame    1100 time 11000.000   
+Reading frame    1200 time 12000.000   
+Reading frame    1300 time 13000.000   
+Reading frame    1400 time 14000.000   
+Reading frame    1500 time 15000.000   
+Reading frame    1600 time 16000.000   
+Reading frame    1700 time 17000.000   
+Reading frame    1800 time 18000.000   
+Reading frame    1900 time 19000.000   
+Reading frame    2000 time 20000.000   
+Dumping frame at t= 25230 ps
+ ->  frame      0 time 25230.000      
+
+GROMACS reminds you: "I believe in miracles cause I'm one" (The Ramones)
+Note that major changes are planned in future for trjconv, to improve usability and utility.
+
+Select group for output
+Selected 0: 'System'
+2026-11-22 17:53:19,911 INFO trjconv completed successfully

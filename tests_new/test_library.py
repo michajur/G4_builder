@@ -184,7 +184,7 @@ class LibraryTests(unittest.TestCase):
         p = FoldingPipeline(config(self.root / "run"))
         result = self.quiet_prepare(p)
         self.assertEqual(result.protocol_steps, 12000000)
-        self.assertEqual(result.simulation_steps, 14500000)
+        self.assertEqual(result.simulation_steps, 13500000)
         self.assertEqual(result.full_ref_label, "rm8")
         self.assertEqual(len(p.references.entries), 11)
         for entry in p.references.entries:
@@ -309,7 +309,7 @@ class LibraryTests(unittest.TestCase):
         mdp = p.paths.mdp.read_text()
         self.assertIn("epsilon_r               = 80", mdp)
         self.assertRegex(mdp, r"dt\s*=\s*0.004")
-        self.assertIn("nsteps                  = 14500000", mdp)
+        self.assertIn("nsteps                  = 13500000", mdp)
         p.run()
         self.assertEqual(p.result.outputs.trajectories[0].name, "smd.xtc")
         self.assertEqual(p.result.outputs.structure, p.paths.tpr)

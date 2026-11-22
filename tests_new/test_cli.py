@@ -57,6 +57,7 @@ class ClientTests(unittest.TestCase):
         configuration = load_input(self.input, self.work)
         self.assertEqual(configuration.dielectric_const, 15)
         self.assertEqual(configuration.saving_stride, 5000)
+        self.assertEqual(configuration.after_folding_steps, 1500000)
         self.assertEqual(configuration.gromacs_executable, "gmx")
         self.assertEqual(configuration.force_field, 4)
         self.values["schedule"] = {"core_steps": 4500000}

@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "config": {
+    "sequence": "GGGTAGGGCGGCGGGGCAGGGT",
+    "GT_resids": {
+      "GT_1": [
+        11,
+        1,
+        2
+      ],
+      "GT_2": [
+        8,
+        7,
+        6
+      ],
+      "GT_3": [
+        19,
+        20,
+        21
+      ],
+      "GT_4": [
+        15,
+        14,
+        13
+      ]
+    },
+    "polarity_pattern": "ssa",
+    "helicity": "RH",
+    "force_field": 5,
+    "gromacs_executable": "gmx",
+    "dielectric_const": 15,
+    "saving_stride": 5000,
+    "after_folding_steps": 2500000,
+    "dt_ps": 0.002,
+    "max_bulge_length": 3,
+    "n_frames": 5,
+    "schedule": {
+      "gt_initial_steps": 400000,
+      "core_start": 1000000,
+      "core_steps": 3000000,
+      "tetrads_steps": 3000000
+    },
+    "working_dir": "/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api"
+  },
+  "protocol_steps": 12000000,
+  "full_ref_label": "rm8",
+  "simulation_steps": 14500000,
+  "completed_stages": [
+    "prepared",
+    "minimized",
+    "simulation_prepared",
+    "extracted"
+  ],
+  "references": [
+    {
+      "name": "ref_1",
+      "category": "GT",
+      "resids": [
+        1,
+        2
+      ],
+      "label": "rm1",
+      "is_full_core": false
+    },
+    {
+      "name": "ref_2",
+      "category": "GT",
+      "resids": [
+        8,
+        7,
+        6
+      ],
+      "label": "rm2",
+      "is_full_core": false
+    },
+    {
+      "name": "ref_3",
+      "category": "GT",
+      "resids": [
+        15,
+        14,
+        13
+      ],
+      "label": "rm3",
+      "is_full_core": false
+    },
+    {
+      "name": "ref_4",
+      "category": "GT",
+      "resids": [
+        19,
+        20,
+        21
+      ],
+      "label": "rm4",
+      "is_full_core": false
+    },
+    {
+      "name": "ref_5",
+      "category": "core",
+      "resids": [
+        1,
+        2,
+        8,
+        7,
+        6
+      ],
+      "label": "rm5",
+      "is_full_core": false
+    },
+    {
+      "name": "ref_6",
+      "category": "core",
+      "resids": [
+        1,
+        2,
+        8,
+        7,
+        6,
+        11
+      ],
+      "label": "rm6",
+      "is_full_core": false
+    },
+    {
+      "name": "ref_7",
+      "category": "core",
+      "resids": [
+        1,
+        2,
+        8,
+        7,
+        6,
+        11,
+        15,
+        14,
+        13
+      ],
+      "label": "rm7",
+      "is_full_core": false
+    },
+    {
+      "name": "ref_8",
+      "category": "core",
+      "resids": [
+        1,
+        2,
+        8,
+        7,
+        6,
+        11,
+        15,
+        14,
+        13,
+        19,
+        20,
+        21
+      ],
+      "label": "rm8",
+      "is_full_core": true
+    },
+    {
+      "name": "ref_9",
+      "category": "tetrads",
+      "resids": [
+        11,
+        8,
+        19,
+        15
+      ],
+      "label": "rm9",
+      "is_full_core": false
+    },
+    {
+      "name": "ref_10",
+      "category": "tetrads",
+      "resids": [
+        1,
+        7,
+        20,
+        14
+      ],
+      "label": "rm10",
+      "is_full_core": false
+    },
+    {
+      "name": "ref_11",
+      "category": "tetrads",
+      "resids": [
+        2,
+        6,
+        21,
+        13
+      ],
+      "label": "rm11",
+      "is_full_core": false
+    }
+  ],
+  "outputs": null,
+  "best_frames": {
+    "25770": 0.057587,
+    "28580": 0.057694,
+    "28850": 0.057716,
+    "25940": 0.05789,
+    "25230": 0.058157
+  },
+  "frame_paths": {
+    "1": "/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/frame_1.pdb",
+    "2": "/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/frame_2.pdb",
+    "3": "/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/frame_3.pdb",
+    "4": "/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/frame_4.pdb",
+    "5": "/home/michal/Symulacje/G4_builder/notebooks/example_results/pipeline_api/frame_5.pdb"
+  }
+}

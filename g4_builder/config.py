@@ -122,7 +122,7 @@ class SimulationConfig:
     gromacs_executable: str = "gmx"
     dielectric_const: float = 15
     saving_stride: int = 5000
-    after_folding_steps: int = 2_500_000
+    after_folding_steps: int = 1_500_000
     dt_ps: float = 0.002
     max_bulge_length: int = 3
     n_frames: int = 5
