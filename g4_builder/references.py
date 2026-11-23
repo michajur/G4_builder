@@ -142,6 +142,16 @@ def build_references(
     Use the returned object's save_full_ref(), save_partial_refs(),
     needs_serial_remap() and remap_serials() methods for subsequent steps.
     """
+
+    # remove it later 
+    print(
+        "!!! WARNING !!!\n"\
+        "Reference templates are built based on ad-hoc parameters"\
+        "(Twist and rise of tetrads) so gemotry of the G-core might\n"\
+        "be a little off. Parameters will be derived from experimental"\
+        "structures and updated in the future."
+    )
+
     if (
         not isinstance(polarity_pattern, str)
         or not polarity_pattern
