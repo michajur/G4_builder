@@ -92,7 +92,7 @@ All four columns must contain the same number of guanines (at least two). This n
 <p align="center">
   <img src="images/Gt_resids.png" width="700" alt="Gt_resids">
   <br>
-  <em>Figure 1. Order of the four G-columns and the correspondence between sequence residue indices and G-tetrad layers.</em>
+  <em><strong>Figure 1.</strong> Order of the four G-columns and the correspondence between sequence residue indices and G-tetrad layers.</em>
 </p>
 
 The `polarity_pattern` selects the predefined `a` or `s` tetrad geometry for each layer. Together with `helicity`, it defines the stacking geometry used to construct the target reference.
@@ -100,7 +100,7 @@ The `polarity_pattern` selects the predefined `a` or `s` tetrad geometry for eac
 <p align="center">
   <img src="images/Pol_patt_helicity.png" width="700" alt="Pol_patt_helicity">
   <br>
-  <em>Figure 2. On the left: the `a` and `s` tetrad orientations and their arrangement within a stack. On the right: right-handed and left-handed G4 stacks.</em>
+  <em><strong>Figure 2.</strong> On the left: the <code>a</code> and <code>s</code> tetrad orientations and their arrangement within a stack. On the right: right-handed and left-handed G4 stacks.</em>
 </p>
 
 **Force-field selection:** The example uses menu number `4`, which is *not* portable across GROMACS installations. Replace it with a force field available in your installation; a GROMACS short name can be used instead of a number.
@@ -133,9 +133,9 @@ The optional `schedule` object controls when successive restraint groups are act
 The protocol first introduces G-tract restraints, then progressively forms the G4 core with overlapping restraints, and finally applies restraints to individual tetrads. The simulation continues for `after_folding_steps` after this schedule, with tetrad restraints remaining active throughout this period. The restraint schedule is illustrated below, with a detailed description of the individual stages provided in the figure caption. The generated `plumed_protocol.dat` contains the complete restraint definitions and timings.
 
 <p align="center">
-  <img src="images/Schedule_scheme.png" width="700" alt="Pol_patt_helicity">
+  <img src="images/Schedule_scheme.png" width="800" alt="Pol_patt_helicity">
   <br>
-  <em>Figure 3. Schematic representation of the restraint schedule used during G4 folding simulations. G-tract restraints are gradually increased to a force constant of 12,000 kJ mol⁻¹ nm⁻² over `gt_initial_steps` and maintained until the final stage of core formation. G-core restraints are introduced sequentially, starting at `core_start`. Each core reference is restrained for `core_steps`, with the force constant increasing linearly to 20,000 kJ mol⁻¹ nm⁻² during the first third of this interval, remaining constant during the second third, and decreasing to zero during the final third. Consecutive core restraints overlap by one-third of `core_steps`. Tetrad restraints are introduced at the beginning of the final third of the last core restraint. Their force constant increases to 20,000 kJ mol⁻¹ nm⁻² over `core_steps / 3`, while the G-tract restraints are simultaneously reduced to zero. The tetrad force constant then decreases linearly to 10,000 kJ mol⁻¹ nm⁻² over the remaining `tetrads_steps - core_steps / 3` steps. Finally, the tetrad restraints are maintained at 10,000 kJ mol⁻¹ nm⁻² for an additional `after_folding_steps`, after which the simulation ends.</em>
+  <em><strong>Figure 3.</strong> Schematic representation of the restraint schedule used during G4 folding simulations. G-tract restraints are gradually increased to a force constant of 12,000 kJ mol⁻¹ nm⁻² over <code>gt_initial_steps</code> and maintained until the final stage of core formation. G-core restraints are introduced sequentially, starting at <code>core_start</code>. Each core reference is restrained for <code>core_steps</code>, with the force constant increasing linearly to 20,000 kJ mol⁻¹ nm⁻² during the first third of this interval, remaining constant during the second third, and decreasing to zero during the final third. Consecutive core restraints overlap by one-third of <code>core_steps</code>. Tetrad restraints are introduced at the beginning of the final third of the last core restraint. Their force constant increases to 20,000 kJ mol⁻¹ nm⁻² over <code>core_steps / 3</code>, while the G-tract restraints are simultaneously reduced to zero. The tetrad force constant then decreases linearly to 10,000 kJ mol⁻¹ nm⁻² over the remaining <code>tetrads_steps - core_steps / 3</code> steps. Finally, the tetrad restraints are maintained at 10,000 kJ mol⁻¹ nm⁻² for an additional <code>after_folding_steps</code>, after which the simulation ends.</em>
 </p>
 
 ## Python API
